@@ -2,10 +2,10 @@
 Project repository for Learning &amp; Soft Computing
 
 ## Project structure
-`bounding_boxes`: Folder for Aykan
+`bounding_boxes/`: Folder for Aykan
 
-`classification`: Folder for classification
+`classification/`: Folder for classification
 
-`explainable_ai`: Folder for explainable ai
+`explainable_ai/`: Folder for explainable ai
 
-`frontend`: Folder for Frontend
+`frontend/`: Folder for Frontend

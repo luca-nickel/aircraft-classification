@@ -1,3 +1,7 @@
+# FGVC Aircraft Dataset
+fgvc-aircraft-2013b/
+fgvc-aircraft-2013b.tar.gz
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

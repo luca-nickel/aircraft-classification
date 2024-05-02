@@ -9,3 +9,6 @@ Project repository for Learning &amp; Soft Computing
 `explainable_ai/`: Folder for explainable ai
 
 `frontend/`: Folder for Frontend
+
+## How to run
+`streamlit run app.py`

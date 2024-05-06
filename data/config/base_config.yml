@@ -1,0 +1,7 @@
+#specify the model name for loading and saving
+#specify paths for saving the model and logs
+#Specify what transforms to use for the data augmentation
+DATA_AUGMENTATION:
+  [RandomHorizontalFlip, RandomVerticalFlip, RandomRotation, RandomResizedCrop, ColorJitter, RandomErasing, RandomPerspective, RandomGrayscale, RandomCrop]
+#Specify model hyperparameters
+#specify logging info

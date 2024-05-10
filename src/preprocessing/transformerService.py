@@ -7,19 +7,14 @@ from torchvision.transforms import v2
 
 # todo define your own pipeline
 class TransformerService:
-    def __init__(self, pipeline_array):
-        self.pipeline_array = pipeline_array
-        # todo based on the pipeline_array, the transformations are executed
-        '''
-            irgendwie so...
-            # Check if the method exists in MyClass and execute it
-            if hasattr(my_object, method_name):
-            method_to_call = getattr(my_object, method_name)
-            method_to_call()
-        '''
-
-    def getTransforms(self):
-        return self.defaultPipeline
+    def __init__(self, pipeline_name):
+        self.transforms = None
+        self.pipeline_name = pipeline_name
+        if hasattr(self, pipeline_name):
+            pipeline_call = getattr(self, pipeline_name)
+            self.transforms = pipeline_call()
+        else:
+            raise ValueError("Pipeline name not found")
 
     '''
         Overview of all default transformations:
@@ -27,26 +22,15 @@ class TransformerService:
     '''
 
     @staticmethod
-    def defaultPipeline():
+    def bounding_Box_Base_Pipeline():
         """
             Default pipeline for image data
         """
         return v2.Compose([
-            v2.ToImage(),  # Convert to tensor, only needed if you had a PIL image
-            v2.ToDtype(torch.uint8, scale=True),  # optional, most input are already uint8 at this point
-            v2.RandomResizedCrop(size=(224, 224), antialias=True),  # Or Resize(antialias=True)
-            v2.ToDtype(torch.float32, scale=True),  # Normalize expects float input
+            v2.CenterCrop(size=(224, 224)),  # Or Resize(antialias=True)
+            v2.ToDtype(torch.float32),  # Normalize expects float input
             v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
 
-    @staticmethod
-    def boundig_box_pipeline():
-        """
-            Pipeline for specific bounding box data
-        """
-        return v2.Compose([
-            v2.ToImage(),  # Convert to tensor, only needed if you had a PIL image
-            v2.ToDtype(torch.uint8, scale=True),  # optional, most input are already uint8 at this point
-            v2.RandomResizedCrop(size=(224, 224), antialias=True),  # Or Resize(antialias=True)
-            v2.ToDtype(torch.float32, scale=True),  # Normalize expects float input
-        ])
+    def getTransforms(self):
+        return self.transforms

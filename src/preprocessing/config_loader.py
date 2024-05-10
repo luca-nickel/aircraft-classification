@@ -2,11 +2,10 @@ import yaml
 from yaml.loader import SafeLoader
 
 
-class ConfigService:
-    def __init__(self):
-        pass
+class config_loader:
 
-    def loadModelConfig(self, path):
+    @staticmethod
+    def loadModelConfig(path):
         # opening a file
         parameter = {}
         with open(path, 'r') as stream:

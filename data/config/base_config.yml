@@ -1,7 +1,16 @@
 #specify the model name for loading and saving
 #specify paths for saving the model and logs
 #Specify what transforms to use for the data augmentation
-DATA_AUGMENTATION:
-  [RandomHorizontalFlip, RandomVerticalFlip, RandomRotation, RandomResizedCrop, ColorJitter, RandomErasing, RandomPerspective, RandomGrayscale, RandomCrop]
+#!!!todo makae paths relative!!!
+DATASET_PATH: "C:\\Projekte\\LearningSoftcomputing\\aircraft-classification\\data\\input\\"
+
+#Todo: maybe instead of name of piepline, specify the transforms to use
+DATA_AUGMENTATION_PIPELINE: bounding_Box_Base_Pipeline
 #Specify model hyperparameters
+LR: 0.001
+L2RegularisationFactor: 0
+MODEL_NAME: "base_test"
 #specify logging info
+
+
+RESULT_FOLDER: "C:\\Projekte\\LearningSoftcomputing\\aircraft-classification\\data\\output\\"

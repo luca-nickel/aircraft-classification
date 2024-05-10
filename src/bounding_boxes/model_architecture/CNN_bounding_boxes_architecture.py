@@ -4,7 +4,7 @@ from torch import nn
 
 class CNN_model_bounding_boxes(nn.Module):
 
-    def __init__(self, input_size, anz_channals):
+    def __init__(self, input_size, anz_channals=3):
         super(CNN_model_bounding_boxes, self).__init__()
         kernel_size = 3
         OUT_CHANNELS = 8
@@ -24,7 +24,7 @@ class CNN_model_bounding_boxes(nn.Module):
         new_img_dimensions = int(int(input_size / 2) / 2)
         self.fc1 = nn.Linear(finalOutChannels * new_img_dimensions * new_img_dimensions, 128)
         self.relu1 = nn.ReLU()
-        self.fc2 = nn.Linear(128, 1)
+        self.fc2 = nn.Linear(128, 4)
 
     # Progresses data across layers
     def forward(self, x):

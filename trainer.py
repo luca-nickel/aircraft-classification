@@ -7,7 +7,7 @@ from datetime import datetime
 
 from src.logging.export_Service import ExportService
 
-#Check for Gpu
+# Check for Gpu
 if torch.cuda.is_available():
     dev = "cuda"
 else:
@@ -18,21 +18,19 @@ device = torch.device(dev)
 
 class model_trainer:
 
-    def __init__(self, parameters, dataset, model, loss_func, optimizer):
+    def __init__(self, parameters, tr_dataset, test_dataset, model, loss_func, optimizer):
         self.parameters = parameters
         self.LOGGING_INTERVAL = parameters['LOGGING_INTERVAL']
         self.NUM_EPOCH = parameters['NUM_EPOCH']
         self.LR = parameters['LR']
         self.BATCH_SIZE = parameters['BATCH_SIZE']
-        self.TRAIN_TEST_SPLIT_RATIO = parameters['TRAIN_TEST_SPLIT_RATIO']
         self.L2RegularisationFactor = parameters['L2RegularisationFactor']
-        self.dataset_train = dataset
-        self.train_size = int(self.TRAIN_TEST_SPLIT_RATIO * len(dataset))
-        self.test_size = len(dataset) - self.train_size
-        self.train_dataset, test_dataset = torch.utils.data.random_split(dataset, [self.train_size, self.test_size])
-        self.train_dataloader = DataLoader(dataset=self.train_dataset, batch_size=self.BATCH_SIZE, shuffle=True,
-                                           num_workers=2)
-        self.test_dataloader = DataLoader(dataset=test_dataset, batch_size=self.BATCH_SIZE, shuffle=True, num_workers=2)
+        self.dataset_train = tr_dataset
+        self.train_dataloader = DataLoader(dataset=self.dataset_train, batch_size=self.BATCH_SIZE, shuffle=True,
+                                           num_workers=0)
+        self.dataset_test = test_dataset
+        self.test_dataloader = DataLoader(dataset=self.dataset_test, batch_size=self.BATCH_SIZE, shuffle=True,
+                                          num_workers=0)
         self.model = model
         model.to(device)
         self.loss = loss_func
@@ -41,9 +39,6 @@ class model_trainer:
         self.logIdx_train = 0
         self.logIdx_test = 0
 
-        print("GPU OUTPUT: ")
-        name = torch.cuda.get_device_name(0)
-        print(name)
 
     '''
         Ausführung:
@@ -97,22 +92,29 @@ class model_trainer:
             ### ______________ TRAIN ______________ ###
             for i, z in enumerate(self.train_dataloader):
                 c = c + 1
-                x = z['x']
-                y = z['y']
+                #todo check ?? the label dimensions etc are mixed up if including batch_size??
+                x = z[0]
+                y = z[1]
                 loss_val, model_out = self.training_step(self.model, x, y, self.loss, self.optimizer)
-                rLabel = round(y.item(), 4)
-                rModel_out = round(model_out.item(), 4)
+                #fix logging are 4 labels now
+                #rLabel = round(y.item(), 4)
+                #rModel_out = round(model_out.item(), 4)
                 rLoss = round(loss_val.item(), 4)
                 rRunningAvgLoss = round(((rRunningAvgLoss + rLoss) / c), 4)
                 eAvgLoss = round(((eAvgLoss + rLoss) / (i + 1)), 4)
+                """
                 train_logging_arr = self.createLogEntry_train(train_logging_arr, e, i, c, rModel_out, rLabel, rLoss,
+                                                              eAvgLoss,
+                                                              rRunningAvgLoss)"""
+                train_logging_arr = self.createLogEntry_train(train_logging_arr, e, i, c, 0, 0, rLoss,
                                                               eAvgLoss,
                                                               rRunningAvgLoss)
                 if i % self.LOGGING_INTERVAL == 0:
                     # Logging Single EPOCH TRAIN
-                    train_logging_arr_interval[logIdx_train] = [int(e), rModel_out, rLabel, rLoss, rRunningAvgLoss]
+                    #train_logging_arr_interval[logIdx_train] = [int(e), rModel_out, rLabel, rLoss, rRunningAvgLoss]
+                    train_logging_arr_interval[logIdx_train] = [int(e), 0, 0, rLoss, rRunningAvgLoss]
                     logIdx_train = logIdx_train + 1
-                    if i % 10000 == 0:
+                    if i % 2 == 0:
                         print("Epoch: {}, Batch: {}".format(e + 1, i))
                         # '''
                         print('IN INTERVAL LOGGING')

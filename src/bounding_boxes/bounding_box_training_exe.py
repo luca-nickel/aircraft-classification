@@ -24,22 +24,23 @@ class bounding_box_training_exe:
         exporter: ExportService = ExportService(EXPORT_PATH)
         transformPipeline: list = self.parameters['DATA_AUGMENTATION_PIPELINE']
         transformService: TransformerService = TransformerService(transformPipeline)
-        dataset_train = FGVCAircraft_bbox(root=self.parameters['DATASET_PATH'], split="train",
-                                          annotation_level="bounding_box",
+        dataset_train = FGVCAircraft_bbox(root=self.parameters['DATASET_PATH'], file="images_bounding_box_train.txt",
                                           download=False, transform=transformService.getTransforms())
-        len_features = len(dataset_train)
+        dataset_test = FGVCAircraft_bbox(root=self.parameters['DATASET_PATH'], file="images_bounding_box_test.txt",
+                                         download=False, transform=transformService.getTransforms())
         len_tsl = len(dataset_train)
         print(len_tsl)
-        model = CNN_model_bounding_boxes(len_tsl, len_features)
+        model = CNN_model_bounding_boxes(224)
         # loss_func = torch.nn.CrossEntropyLoss()  # classyfi
         loss_func = torch.nn.MSELoss()  # MSE
         LR = self.parameters['LR']
         L2RegularisationFactor = self.parameters['L2RegularisationFactor']
         optimizer = torch.optim.Adam(model.parameters(), lr=LR, weight_decay=L2RegularisationFactor)
-        trainer = model_trainer(self.parameters, dataset_train, model, loss_func, optimizer)
+        trainer = model_trainer(self.parameters, dataset_train, dataset_test, model, loss_func, optimizer)
         model = trainer.run(exporter)
         exporter.storeModel(model, self.parameters['MODEL_NAME'])
 
 
 exe = bounding_box_training_exe()
+print(torch.cuda.is_available())
 exe.exe()

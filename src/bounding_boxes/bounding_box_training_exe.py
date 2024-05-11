@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from logging.export_service import ExportService
 
 import torch
 
@@ -7,7 +8,6 @@ from src.bounding_boxes.fgvs_aircraft_custom_dataset import FGVCAircraft_bbox
 from src.bounding_boxes.model_architecture.CNN_bounding_boxes_architecture import (
     CNN_model_bounding_boxes,
 )
-from src.logging.export_Service import ExportService
 from src.preprocessing.config_loader import ConfigLoader
 from src.preprocessing.transformer_service import TransformerService
 from trainer import model_trainer
@@ -53,7 +53,7 @@ class bounding_box_training_exe:
             self.parameters, dataset_train, dataset_test, model, loss_func, optimizer
         )
         model = trainer.run(exporter)
-        exporter.storeModel(model, self.parameters["MODEL_NAME"])
+        exporter.store_model(model, self.parameters["MODEL_NAME"])
 
 
 exe = bounding_box_training_exe()

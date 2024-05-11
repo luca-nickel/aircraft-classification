@@ -8,14 +8,14 @@ from src.bounding_boxes.model_architecture.CNN_bounding_boxes_architecture impor
     CNN_model_bounding_boxes,
 )
 from src.logging.export_Service import ExportService
-from src.preprocessing.config_loader import config_loader
+from src.preprocessing.config_loader import ConfigLoader
 from src.preprocessing.transformer_service import TransformerService
 from trainer import model_trainer
 
 
 class bounding_box_training_exe:
     def __init__(self):
-        self.parameters = config_loader.loadModelConfig(
+        self.parameters = ConfigLoader.load_model_config(
             "C:\\Projekte\\LearningSoftcomputing\\aircraft-classification\\data\\config\\base_config.yml"
         )
 

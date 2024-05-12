@@ -5,17 +5,17 @@ from typing import Optional, Tuple, Any
 import PIL
 import torch
 from torchvision.datasets import VisionDataset
-from torchvision.datasets.utils import verify_str_arg, download_and_extract_archive
+from torchvision.datasets.utils import download_and_extract_archive
 
 
-class FGVCAircraft_bbox(VisionDataset):
+class FgvcAircraftBbox(VisionDataset):
     def __init__(
-            self,
-            root: str,
-            file: str = "images_bounding_box_train.txt",
-            transform: Optional[Callable] = None,
-            target_transform: Optional[Callable] = None,
-            download: bool = False,
+        self,
+        root: str,
+        file: str = "images_bounding_box_train.txt",
+        transform: Optional[Callable] = None,
+        target_transform: Optional[Callable] = None,
+        download: bool = False,
     ) -> None:
         super().__init__(root, transform=transform, target_transform=target_transform)
         self.file = file
@@ -24,12 +24,12 @@ class FGVCAircraft_bbox(VisionDataset):
             self._download()
 
         if not self._check_exists():
-            raise RuntimeError("Dataset not found. You can use download=True to download it")
+            raise RuntimeError(
+                "Dataset not found. You can use download=True to download it"
+            )
 
         image_data_folder = os.path.join(self._data_path, "data", "images")
-        annotation_file = os.path.join(
-            self._data_path, "data", self.file
-        )
+        annotation_file = os.path.join(self._data_path, "data", self.file)
         self._image_files = []
         self._labels = []
         with open(annotation_file, "r") as f:
@@ -37,7 +37,9 @@ class FGVCAircraft_bbox(VisionDataset):
                 parts = line.split()
                 # Extract the last four figures
                 image_name = parts[0]
-                self._image_files.append(os.path.join(image_data_folder, f"{image_name}.jpg"))
+                self._image_files.append(
+                    os.path.join(image_data_folder, f"{image_name}.jpg")
+                )
                 coordinates_str_label = parts[-4:]
                 coordinates_label = [float(i) for i in coordinates_str_label]
                 self._labels.append(torch.FloatTensor(coordinates_label))

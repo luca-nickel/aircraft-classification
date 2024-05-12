@@ -1,5 +1,7 @@
 /data/input/*
+/data/output/*
 .idea/
+src/bounding_boxes/logs/*
 
 # FGVC Aircraft Dataset
 fgvc-aircraft-2013b/

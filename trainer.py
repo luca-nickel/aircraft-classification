@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import DataLoader
 from datetime import datetime
 from torch.utils.tensorboard import SummaryWriter
-from src.logging.export_service import export_service
+from src.logging.export_service import ExportService
 
 # Check for Gpu
 if torch.cuda.is_available():
@@ -18,26 +18,47 @@ device = torch.device(dev)
 
 class model_trainer:
 
-    def __init__(self, parameters, tr_dataset, test_dataset, model, loss_func, optimizer,
-                 exporter: export_service):
+    def __init__(
+        self,
+        parameters,
+        tr_dataset,
+        test_dataset,
+        model,
+        loss_func,
+        optimizer,
+        exporter: ExportService,
+    ):
         now = datetime.now()
         start_time = now.strftime("%Y-%m-%d_%H_%M_%S")
         self.exporter = exporter
         self.parameters = parameters
-        self.logging_interval = parameters['logging_interval']
-        self.num_epoch = parameters['num_epoch']
-        self.lr = parameters['lr']
-        self.batch_size = parameters['batch_size']
-        self.l2_regularisation_factor = parameters['l2_regularisation_factor']
+        self.logging_interval = parameters["logging_interval"]
+        self.num_epoch = parameters["num_epoch"]
+        self.lr = parameters["lr"]
+        self.batch_size = parameters["batch_size"]
+        self.l2_regularisation_factor = parameters["l2_regularisation_factor"]
         self.dataset_train = tr_dataset
-        self.train_dataloader = DataLoader(dataset=self.dataset_train, batch_size=self.batch_size, shuffle=True,
-                                           num_workers=0)
+        self.train_dataloader = DataLoader(
+            dataset=self.dataset_train,
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=0,
+        )
         self.dataset_test = test_dataset
-        self.test_dataloader = DataLoader(dataset=self.dataset_test, batch_size=self.batch_size, shuffle=True,
-                                          num_workers=0)
-        #todo fix some name to identify run
-        self.writer = SummaryWriter(os.path.join("logs", f"{start_time}_lr_{self.lr}_batch_size_{self.batch_size}_l2_"
-                                    f"{self.l2_regularisation_factor}"))
+        self.test_dataloader = DataLoader(
+            dataset=self.dataset_test,
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=0,
+        )
+        # todo fix some name to identify run
+        self.writer = SummaryWriter(
+            os.path.join(
+                "logs",
+                f"{start_time}_lr_{self.lr}_batch_size_{self.batch_size}_l2_"
+                f"{self.l2_regularisation_factor}",
+            )
+        )
         self.model = model
         model.to(device)
         self.loss = loss_func
@@ -53,29 +74,33 @@ class model_trainer:
                 # todo check ?? the label dimensions etc are mixed up if including batch_size??
                 x = z[0]
                 y = z[1]
-                loss_val, model_out = self.training_step(self.model, x, y, self.loss, self.optimizer)
-                self.writer.add_scalar('Loss/train', loss_val, i)
+                loss_val, model_out = self.training_step(
+                    self.model, x, y, self.loss, self.optimizer
+                )
+                self.writer.add_scalar("Loss/train", loss_val, i)
                 if i % self.logging_interval == 0:
                     # Logging Single EPOCH TRAIN
 
                     if i % 2 == 0:
                         print("Epoch: {}, Batch: {}".format(e + 1, i))
                         # '''
-                        print('IN INTERVAL LOGGING')
-                        print('model_INPUT:')
+                        print("IN INTERVAL LOGGING")
+                        print("model_INPUT:")
                         print(x)
-                        print('model_out')
+                        print("model_out")
                         print(model_out)
-                        print('y')
+                        print("y")
                         print(y)
                         print("Training Loss: {}".format(loss_val))
-                        print('________________')
+                        print("________________")
                         # '''
             # soll-ist logging training epoch
 
             ##### TEST FOR EACH EPOCH
             with torch.no_grad():
-                epochTestArr = self.test_model(self.test_dataloader, self.model, self.loss)
+                epochTestArr = self.test_model(
+                    self.test_dataloader, self.model, self.loss
+                )
 
         now = datetime.now()
         end_time = now.strftime("%Y-%m-%d_%H_%M_%S")
@@ -101,7 +126,8 @@ class model_trainer:
                     # bei anderer Fehlerfunktion zu ändern, bzw. über loss.item() definieren
                     loss_val = loss_func(model_out, y_val)
                     model_out_val = model_out[j]
-                self.writer.add_scalar('Loss/test', loss_val, i)
+                # todo: add logging hyper param under paramter/*
+                self.writer.add_scalar("Loss/test", loss_val, i)
 
         return [model_out_val, loss_val]
 

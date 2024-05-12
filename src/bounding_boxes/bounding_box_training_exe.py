@@ -15,7 +15,7 @@ from trainer import model_trainer
 class bounding_box_training_exe:
     def __init__(self):
 
-        self.parameters = config_loader.loadModelConfig(os.path.join('..', '..', 'data', 'config', 'base_config.yml'))
+        self.parameters = config_loader.load_model_config(os.path.join('..', '..', 'data', 'config', 'base_config.yml'))
 
     def exe(self):
         now = datetime.now()

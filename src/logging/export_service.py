@@ -22,25 +22,17 @@ class ExportService:
         self, arr: np.ndarray, columns: list, sub_folder_path: str, path_to_save: str
     ):
         df = pd.DataFrame(arr, columns=columns)
-        folderPath = os.path.join(self.folder_path, sub_folder_path)
-        if not os.path.exists(folderPath):
-            os.makedirs(folderPath)
-        filePath = os.path.join(folderPath, path_to_save + ".csv")
-        df.to_csv(filePath, sep=";", index=False)
+        folder_path = os.path.join(self.folder_path, sub_folder_path)
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+        file_path = os.path.join(folder_path, path_to_save + ".csv")
+        df.to_csv(file_path, sep=";", index=False)
 
-    def store_numpy_time_series(self, arr, pathToSave):
-        """
-        #tod rename into "storeSeries"
-        von storeTimeSeriesNumpyFeatureDataSeperatly
-        wird x mal aufgerufen x=feature List
+    def store_numpy_time_series(self, array, path_to_save):
+        file_path = os.path.join(self.folder_path, path_to_save)
+        np.save(file_path, array)
 
-        param:
-            arr = dimension (1200, 20) = (länger aller ts, länger einzelner_ts)
-        """
-        filePath = os.path.join(self.folder_path, pathToSave)
-        np.save(filePath, arr)
-
-    def store_model(self, model, modelName: str):
+    def store_model(self, model, model_name: str):
         model_scripted = torch.jit.script(model)  # Export to TorchScript
         now = datetime.now()
         date_time_as_str = (
@@ -52,5 +44,5 @@ class ExportService:
             + str(now.minute)
         )
         model_scripted.save(
-            os.path.join(self.folder_path, modelName + date_time_as_str + ".pt")
+            os.path.join(self.folder_path, model_name + date_time_as_str + ".pt")
         )  # Save

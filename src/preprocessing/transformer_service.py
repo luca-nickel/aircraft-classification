@@ -6,7 +6,7 @@ from torchvision.transforms import v2
 
 
 # todo define your own pipeline
-class TransformerService:
+class transformer_service:
     def __init__(self, pipeline_name):
         self.transforms = None
         self.pipeline_name = pipeline_name
@@ -22,7 +22,7 @@ class TransformerService:
     '''
 
     @staticmethod
-    def bounding_Box_Base_Pipeline():
+    def bounding_box_base_pipeline():
         """
             Default pipeline for image data
         """
@@ -33,5 +33,5 @@ class TransformerService:
             v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
 
-    def getTransforms(self):
+    def get_transforms(self):
         return self.transforms

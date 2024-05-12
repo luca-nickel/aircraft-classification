@@ -1,21 +1,21 @@
 #specify the model name for loading and saving
 #specify paths for saving the model and logs
 #Specify what transforms to use for the data augmentation
-#!!!todo makae paths relative!!!
-DATASET_PATH: "C:\\Projekte\\LearningSoftcomputing\\aircraft-classification\\data\\input\\"
+#!!!todo make paths relative!!!
+dataset_path: "C:\\Projekte\\LearningSoftcomputing\\aircraft-classification\\data\\input\\"
 
 #Todo: maybe instead of name of piepline, specify the transforms to use
-DATA_AUGMENTATION_PIPELINE: bounding_Box_Base_Pipeline
+data_augmentation_pipeline: bounding_box_base_pipeline
 
 #Specify model hyperparameters
-NUM_EPOCH: 3
-LR: 0.001
-L2RegularisationFactor: 0
-BATCH_SIZE: 1
+num_epoch: 3
+lr: 0.001
+l2_regularisation_factor: 0
+batch_size: 1
 
-MODEL_NAME: "base_test"
+model_name: "base_test"
 
 #specify logging info
-LOGGING_INTERVAL: 100
+logging_interval: 100
 
-RESULT_FOLDER: "C:\\Projekte\\LearningSoftcomputing\\aircraft-classification\\data\\output\\"
+result_folder: "C:\\Projekte\\LearningSoftcomputing\\aircraft-classification\\data\\output\\"

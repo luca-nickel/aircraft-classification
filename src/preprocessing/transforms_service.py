@@ -8,6 +8,11 @@ from torchvision.transforms import v2
 
 # todo define your own pipeline
 class TransformsService:
+    """
+    Overview of all default transformations:
+    https://pytorch.org/vision/stable/transforms.html
+    """
+
     def __init__(self, pipeline_name):
         self.transforms = None
         self.pipeline_name = pipeline_name
@@ -16,11 +21,6 @@ class TransformsService:
             self.transforms = pipeline_call()
         else:
             raise ValueError("Pipeline name not found")
-
-    """
-        Overview of all default transformations:
-        https://pytorch.org/vision/stable/transforms.html
-    """
 
     @staticmethod
     def bounding_box_base_pipeline():

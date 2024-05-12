@@ -1,6 +1,5 @@
 import os
 
-import numpy as np
 import torch
 from torch.utils.data import DataLoader
 from datetime import datetime
@@ -9,14 +8,12 @@ from src.logging.export_service import ExportService
 
 # Check for Gpu
 if torch.cuda.is_available():
-    dev = "cuda"
+    device = torch.device("cuda")
 else:
-    dev = "cpu"
-
-device = torch.device(dev)
+    device = torch.device("cpu")
 
 
-class model_trainer:
+class ModelTrainer:
 
     def __init__(
         self,
@@ -67,9 +64,6 @@ class model_trainer:
     def run(self):
         for e in range(self.num_epoch):
             self.model.train()
-            ############## FOR EPOCH #############
-            ######## EPOCH Train #######
-            ### ______________ TRAIN ______________ ###
             for i, z in enumerate(self.train_dataloader):
                 # todo check ?? the label dimensions etc are mixed up if including batch_size??
                 x = z[0]
@@ -108,7 +102,6 @@ class model_trainer:
         return self.model
 
     def test_model(self, test_data, model, loss_func):
-        ### ______________ TEST ______________ ###
         with torch.no_grad():
             # Model should not improve
             model.eval()

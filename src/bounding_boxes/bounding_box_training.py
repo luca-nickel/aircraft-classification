@@ -11,7 +11,7 @@ from src.bounding_boxes.model_architecture.cnn_bounding_boxes_architecture impor
 )
 from src.logging.export_service import ExportService
 from src.preprocessing.transforms_service import TransformsService
-from trainer import model_trainer
+from src.trainer import ModelTrainer
 
 
 class BoundingBoxTraining:
@@ -52,7 +52,7 @@ class BoundingBoxTraining:
         optimizer = torch.optim.Adam(
             model.parameters(), lr=lr, weight_decay=l2_regularisation_factor
         )
-        trainer = model_trainer(
+        trainer = ModelTrainer(
             self.parameters,
             dataset_train,
             dataset_test,

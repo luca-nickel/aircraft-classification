@@ -3,9 +3,6 @@ from pathlib import Path
 from PIL import Image
 
 
-# Original code from: https://pypi.org/project/streamlit-simple-gallery/
-
-
 @st.cache_resource(show_spinner="Refreshing gallery...")
 class ImageGallery:
     """Create a simple gallery out of streamlit widgets.

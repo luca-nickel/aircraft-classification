@@ -5,83 +5,134 @@ import glob
 import altair as alt
 import pandas as pd
 
+
 st.set_page_config(layout="wide")
 st.title("Aircraft Classification")
-
-# Add a selectbox to the sidebar
-type_selectbox = st.sidebar.selectbox(
+type_selectbox = st.sidebar.selectbox(  # Add selectbox to the sidebar
     "Classification Type", ("Manufacturer", "Family", "Variant")
 )
 
-images = glob.glob("../fgvc-aircraft-2013b/data/images/*.jpg")
+images = glob.glob("../fgvc-aircraft-2013b/data/images/*.jpg")  # Load images
+page_size = 16  # Gallery page size
+page_max = len(images) // page_size  # Maximum number of pages
+# Create an empty placeholder for the images that can be updated later
+placeholder = st.empty()
 
-# Initialize the index in session state if it is not already set
+# Initialize index state
 if "index" not in st.session_state:
     st.session_state.index = 0
-
-
-# Update function to increment index
-def increment_index():
-    if st.session_state.index < len(images) - 1:
-        st.session_state.index += 1
-
-
-# Update function to decrement index
-def decrement_index():
-    if st.session_state.index > 0:
-        st.session_state.index -= 1
-
 
 # Initialize page state
 if "page" not in st.session_state:
     st.session_state.page = 1
 
 
-# Update function to increment page
+def increment_index():
+    """Increment classification image index"""
+    if st.session_state.index < len(images) - 1:
+        st.session_state.index += 1
+    elif st.session_state.index == len(images) - 1:
+        st.session_state.index = 0
+    set_images()
+
+
+def decrement_index():
+    """Decrement classification image index"""
+    if st.session_state.index > 0:
+        st.session_state.index -= 1
+    elif st.session_state.index == 0:
+        st.session_state.index = len(images) - 1
+    set_images()
+
+
 def increment_page():
-    if st.session_state.page < len(images) / 16:
+    """Increment image gallery page"""
+    if st.session_state.page < len(images) / page_size:
         st.session_state.page += 1
+    elif st.session_state.page == len(images) / page_size:
+        st.session_state.page = 1
 
 
-# Update function to decrement page
 def decrement_page():
+    """Decrement image gallery page"""
     if st.session_state.page > 1:
         st.session_state.page -= 1
+    elif st.session_state.page == 1:
+        st.session_state.page = page_max
 
 
-col_original, col_heatmap = st.columns([1, 1])
+def set_images(img_custom: Image.Image = None):
+    """Set original image and heatmap in a placeholder to make it easier to update
 
-if images:
-    original = Image.open(images[st.session_state.index]).resize((800, 500))
-    heatmap = Image.open("./heatmap.png").resize((800, 500))
-    col_original.header("Original Image")
-    col_original.image(original, use_column_width=True)
-    col_heatmap.header("Heatmap")
-    col_heatmap.image(heatmap, use_column_width=True)
+    Args:
+        img_custom (Image.Image, optional): Use to set an image uploaded by the user. Defaults to None.
+    """
+    placeholder.empty()  # Clear the placeholder
+    with placeholder.container():
+        # Add columns to display images
+        col_original, col_heatmap = st.columns([1, 1])
 
-# Add control buttons to switch images
+        # Display images if available
+        if images:
+            if img_custom:
+                img = img_custom.resize((800, 500))
+            else:
+                img = Image.open(images[st.session_state.index]).resize((800, 500))
+            heatmap = Image.open("./heatmap.png").resize((800, 500))
+            col_original.header("Original Image")
+            col_original.image(img, use_column_width=True)
+            col_heatmap.header("Heatmap")
+            col_heatmap.image(heatmap, use_column_width=True)
+
+
+set_images()
+
+# Add columns to display buttons
 col_upload, space1, col_prev, space2, col_next, space3, col_classify = st.columns(
-    [2, 2, 1, 4, 1, 3, 1.5]
+    [3, 2, 1, 4, 1, 3, 1.5]
 )
 
-col_upload.button("Upload")
-if col_prev.button(":arrow_left:", on_click=decrement_index):
+# Button to move to previous image
+if col_prev.button(
+    "<",
+    key="btn_prev_img",
+    on_click=decrement_index,
+    disabled=st.session_state.get("disabled", False),
+):
     pass
-if col_next.button(":arrow_right:", on_click=increment_index):
+
+# Button to move to next image
+if col_next.button(
+    "\>",
+    key="btn_next_img",
+    on_click=increment_index,
+):
     pass
+
 col_classify.button("Classify")
 
-# Ensure index remains within the bounds
-st.session_state.index = max(0, min(st.session_state.index, len(images) - 1))
+# Add file uploader
+uploaded_file = st.file_uploader(
+    "Upload custom image",
+    type=["jpg", "jpeg", "png"],
+)
 
-# Add bar chart to show the classification scores
+if uploaded_file:
+    uploaded_image = Image.open(uploaded_file).resize((800, 500))
+    # Replace the original image with the uploaded image
+    set_images(uploaded_image)
+
+
+# Add bar chart to show classification scores
 chart_data = pd.DataFrame(
     [0.4, 0.3, 0.15, 0.1, 0.05],
     index=["Airbus", "Boeing", "Bombardier", "Cessna", "Embraer"],
 )
 
+# Convert DataFrame to a format suitable for Altair
 chart_data = pd.melt(chart_data.reset_index(), id_vars=["index"])
 
+# Create bar chart
 chart = (
     alt.Chart(chart_data, title="Classification Scores", height=300)
     .mark_bar()
@@ -120,4 +171,4 @@ with st.expander("Dataset Gallery"):
         pass
     if col_next.button("\>", on_click=increment_page):
         pass
-    col_info.write(f"Page {st.session_state.page}/{len(images) // 16}")
+    col_info.write(f"Page {st.session_state.page}/{len(images) // page_size}")

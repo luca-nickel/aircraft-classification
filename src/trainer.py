@@ -71,12 +71,12 @@ class ModelTrainer:
             self.model.train()
             for i, z in enumerate(self.train_dataloader):
                 x = z[0]
-                """
+
                 toImgTransform = v2.ToPILImage()
                 tensorImg = x[0]
                 img = toImgTransform(tensorImg)
                 img.show()
-                """
+
                 #  test show image
                 y = z[1]
                 loss_val, model_out = self.training_step(

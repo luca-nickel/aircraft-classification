@@ -1,7 +1,7 @@
 """
     Service Class that executes specific predefined transformations on the data
 """
-
+import numpy as np
 import torch
 from torchvision.transforms import v2
 
@@ -50,28 +50,17 @@ class TransformsService:
         """
         return v2.Compose(
             [
-                v2.CenterCrop(size=(1400, 1400)),
+                PadImageAfter(1600),  # converts Pil image to tensor as well as pads the image
+                # NEED FOR CONVOLUTION OR RESIZE OR SOMETHING ELSE IMG TO BIG
+                # v2.CenterCrop(size=(1400, 1400)),
+                # v2.PILToTensor(),
                 #  transforms.Grayscale(num_output_channels=3), maybe grayscale ???
-                v2.PILToTensor(),
-                v2.Resize(size=(350, 350)),
-                v2.ToDtype(torch.float32),
-                #v2.Normalize(mean=(0, 0, 0), std=(1, 1, 1)),  # normalize between 0 and 1
-                #v2.RandomRotation(degrees=15), bounding boxes can not have rotation
+                # v2.Resize(size=(512, 512)), # currently destorying img
+                # v2.ToDtype(torch.float32),
+                # v2.Normalize(mean=(0, 0, 0), std=(1, 1, 1)),  # normalize between 0 and 1
+                # v2.RandomRotation(degrees=15), bounding boxes can not have rotation
                 v2.ColorJitter(),
-                v2.RandomHorizontalFlip()
-            ]
-        )
-
-    @staticmethod
-    def transform_tensor_to_img():
-        """
-            A pipeline to transform tensor to PIL Image
-
-        :return: transform
-        """
-        return v2.Compose(
-            [
-                v2.ToPILImage()
+                # v2.RandomHorizontalFlip()
             ]
         )
 
@@ -92,3 +81,37 @@ class TransformsService:
 
     def get_transforms(self):
         return self.transforms
+
+
+class PadImageAfter(object):
+    """Pads an given input image to a fixed size, where the original image is placed on the left top corner
+    and filled with zeros on the right and bottom side. THis is neccessary because coordinates of bounding boxes are
+    defined that way (0, 0, 0, 0) = top left corner
+
+    Args:
+        output_size (tuple or int): Desired output size. If tuple, output is
+            matched to output_size. If int, smaller of image edges is matched
+            to output_size keeping aspect ratio the same.
+    """
+
+    def __init__(self, output_size):
+        self.output_size = output_size
+
+    def __call__(self, image):
+
+        h = image.height
+        w = image.width
+        img = np.array(image)
+        img = np.transpose(img, (2, 0, 1))
+        target = np.zeros((3, self.output_size, self.output_size))
+        target[:, :h, :w] = img
+        toReturnTensor = torch.from_numpy(target)
+        # toReturnTensor.type(torch.float32)
+        """ 
+        #DEBUGGING
+        toImgTransform = v2.ToPILImage()
+        tensorImg = toReturnTensor
+        img = toImgTransform(tensorImg)
+        img.show()
+        """
+        return toReturnTensor

@@ -41,11 +41,8 @@ class CnnModelBoundingBoxes(nn.Module):
             dilation=1,
         )
         self.max_pool2 = nn.MaxPool2d(kernel_size=kernel_size - 1, stride=2)
-
-        final_out_channels = out_channels * 2 * 2 * 2
-        new_img_dimensions = int(int(input_size / 2) / 2)
         self.fc1 = nn.Linear(
-            final_out_channels * new_img_dimensions * new_img_dimensions, 128
+            484416, 128
         )
         self.relu1 = nn.ReLU()
         self.fc2 = nn.Linear(128, 4)

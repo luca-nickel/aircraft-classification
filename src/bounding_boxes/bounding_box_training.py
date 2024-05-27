@@ -16,7 +16,7 @@ from src.trainer import ModelTrainer
 class BoundingBoxTraining:
     def __init__(self):
         self.parameters = {}
-        path = os.path.join("..", "..", "data", "config", "base_config_mac.yml")
+        path = os.path.join("..", "..", "data", "config", "base_config.yml")
         with open(path, "r", encoding="utf-8") as stream:
             # Converts yaml document to python object
             self.parameters = yaml.load(stream, Loader=SafeLoader)

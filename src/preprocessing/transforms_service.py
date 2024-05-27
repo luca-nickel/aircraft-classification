@@ -29,17 +29,13 @@ class TransformsService:
     def default_classification_pipeline():
         return v2.Compose(
             [
-                # _PadImageAfter(1600),  # converts Pil image to tensor as well as pads the image
-                # PadImageAfter(),
-                # NEED FOR CONVOLUTION OR RESIZE OR SOMETHING ELSE IMG TO BIG
-                v2.CenterCrop(size=(1400, 1400)),
+                v2.CenterCrop(size=(600, 600)),
                 v2.PILToTensor(),
                 # transforms.Grayscale(num_output_channels=3), maybe grayscale ???
-                v2.Resize(size=(512, 512)),  # currently destorying img
+                v2.Resize(size=(224, 224)),
                 v2.ToDtype(torch.float32),
                 v2.Normalize(mean=(0, 0, 0), std=(1, 1, 1)),  # normalize between 0 and 1
-                # !! ROTATION ALSO TRANSFORM Box Coordinates...!!!!!
-                v2.RandomRotation(degrees=15), #bounding boxes can not have rotation
+                v2.RandomRotation(degrees=15),
                 v2.ColorJitter(),
                 v2.RandomHorizontalFlip()
             ]
@@ -73,14 +69,14 @@ class TransformsService:
                 # _PadImageAfter(1600),  # converts Pil image to tensor as well as pads the image
                 PadImageAfter(),
                 # NEED FOR CONVOLUTION OR RESIZE OR SOMETHING ELSE IMG TO BIG
-                # v2.CenterCrop(size=(1400, 1400)),
+                # v2.CenterCrop(size=(400, 400)),
                 # v2.PILToTensor(),
                 # transforms.Grayscale(num_output_channels=3), maybe grayscale ???
-                # v2.Resize(size=(512, 512)),  # currently destorying img
+                v2.Resize(size=(512, 512)),  # currently destorying img
                 # v2.ToDtype(torch.float32),
                 # v2.Normalize(mean=(0, 0, 0), std=(1, 1, 1)),  # normalize between 0 and 1
                 # !! ROTATION ALSO TRANSFORM Box Coordinates...!!!!!
-                # v2.RandomRotation(degrees=15), bounding boxes can not have rotation
+                # v2.RandomRotation(degrees=15), #  bounding boxes can not have rotation
                 # v2.ColorJitter(),
                 # v2.RandomHorizontalFlip()
             ]
@@ -111,18 +107,18 @@ class PadImageAfter(torch.nn.Module):
         w = image.width
         img = np.array(image)
         img = np.transpose(img, (2, 0, 1))
+
         target = np.zeros((3, output_size, output_size))
         target[:, :h, :w] = img
-        toReturnTensor = torch.from_numpy(target)
-        # toReturnTensor.type(torch.float32)
-        """ 
-        #DEBUGGING
-        toImgTransform = v2.ToPILImage()
-        tensorImg = toReturnTensor
-        img = toImgTransform(tensorImg)
-        img.show()
+        tensor_img = torch.tensor(target, dtype=torch.uint8)
+
         """
-        return toReturnTensor
+        # DEBUGGING
+        toImgTransform = v2.ToPILImage()
+        img = toImgTransform(tensor_img)
+        img.show()"""
+
+        return tensor_img
 
 
 class _PadImageAfter(object):

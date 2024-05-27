@@ -1,10 +1,9 @@
 import os
-from datetime import datetime
-
 import torch
 import yaml
-from yaml import SafeLoader
 
+from yaml import SafeLoader
+from datetime import datetime
 from src.bounding_boxes.fgvs_aircraft_custom_dataset import FgvcAircraftBbox
 from src.bounding_boxes.model_architecture.cnn_bounding_boxes_architecture import (
     CnnModelBoundingBoxes,
@@ -17,7 +16,7 @@ from src.trainer import ModelTrainer
 class BoundingBoxTraining:
     def __init__(self):
         self.parameters = {}
-        path = os.path.join("..", "..", "data", "config", "base_config.yml")
+        path = os.path.join("..", "..", "data", "config", "base_config_mac.yml")
         with open(path, "r", encoding="utf-8") as stream:
             # Converts yaml document to python object
             self.parameters = yaml.load(stream, Loader=SafeLoader)
@@ -44,7 +43,7 @@ class BoundingBoxTraining:
         )
         len_tsl = len(dataset_train)
         print(len_tsl)
-        model = CnnModelBoundingBoxes(224)
+        model = CnnModelBoundingBoxes(512)
         # loss_func = torch.nn.CrossEntropyLoss()  # classyfi
         loss_func = torch.nn.MSELoss()  # MSE
         lr = self.parameters["lr"]

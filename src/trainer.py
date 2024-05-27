@@ -1,13 +1,12 @@
 import os
 
-import matplotlib.pyplot as plt
 import torch
 from torch.utils.data import DataLoader
 from datetime import datetime
-from torch.utils.tensorboard import SummaryWriter
+#from torch.utils.tensorboard import SummaryWriter
 from src.logging.export_service import ExportService
 from src.preprocessing.transforms_service import TransformsService
-from torchvision.transforms import v2
+from torchvision.transforms import transforms as v2
 
 # Check for Gpu
 if torch.cuda.is_available():
@@ -54,6 +53,7 @@ class ModelTrainer:
             num_workers=0,
         )
         # todo fix some name to identify run
+        """
         self.writer = SummaryWriter(
             os.path.join(
                 "logs",
@@ -61,6 +61,7 @@ class ModelTrainer:
                 f"{self.l2_regularisation_factor}",
             )
         )
+        """
         self.model = model
         model.to(device)
         self.loss = loss_func

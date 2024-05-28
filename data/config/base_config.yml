@@ -5,14 +5,13 @@
 dataset_path: "C:\\Projekte\\LearningSoftcomputing\\aircraft-classification\\data\\input\\"
 
 #Todo: maybe instead of name of piepline, specify the transforms to use
-#data_augmentation_pipeline: bounding_box_base_pipeline
-data_augmentation_pipeline: default_classification_pipeline
+data_augmentation_pipeline: bounding_box_base_pipeline
 
 #Specify model hyperparameters
 num_epoch: 3
 lr: 0.001
 l2_regularisation_factor: 0
-batch_size: 2
+batch_size: 1
 
 model_name: "base_test"
 

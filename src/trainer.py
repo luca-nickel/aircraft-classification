@@ -74,10 +74,13 @@ class ModelTrainer:
             for i, z in enumerate(self.train_dataloader):
                 x = z[0]
 
+                """
+                To Visualize Input Image
                 toImgTransform = v2.ToPILImage()
                 tensorImg = x[0]
                 img = toImgTransform(tensorImg)
                 img.show()
+                """
 
                 #  test show image
                 y = z[1]

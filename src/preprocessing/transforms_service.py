@@ -45,6 +45,11 @@ class TransformsService:
     def bounding_box_base_pipeline():
         """
             Default pipeline for image data
+            NOTE = 1 Value in Label:
+            1.) Distanz von links -> rechts (innen)
+            2.) Distanz von oben -> unten (innen)
+            3.) Distanz von links -> rechts (außen)
+            4.) Distanz von oben -> unten (außen)
 
             Idea:
             Generate fixed sized images, with different random augmentations so increasing the training iterationn
@@ -71,10 +76,11 @@ class TransformsService:
                 # transforms.Grayscale(num_output_channels=3), maybe grayscale ???
                 v2.Resize(size=(512, 512)),
                 # v2.ToDtype(torch.float32),
-                # v2.Normalize(mean=(0, 0, 0), std=(1, 1, 1)),  # normalize between 0 and 1
+                v2.Normalize(mean=(0, 0, 0), std=(1, 1, 1)),  # normalize between 0 and 1
                 # !! ROTATION ALSO TRANSFORM Box Coordinates...!!!!!
-                # v2.RandomRotation(degrees=15), #  bounding boxes can not have rotation
+                # v2.RandomRotation(degrees=15),  # bounding boxes can not have rotation
                 v2.ColorJitter(),
+                # !! ALSO TRANSFORM Box Coordinates to Upside Down then...!!!!!
                 # v2.RandomHorizontalFlip()
             ]
         )
@@ -106,7 +112,8 @@ class PadImageAfter:
     def __call__(self, image):  # we assume inputs are always structured like this
         h = image.height
         w = image.width
-        image.show()
+        #  To Visualize Input Image
+        #  image.show()
         img = np.array(image)
         img = np.transpose(img, (2, 0, 1))
 

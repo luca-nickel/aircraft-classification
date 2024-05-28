@@ -54,7 +54,7 @@ class FgvcAircraftBbox(VisionDataset):
         if self.transform:
             print("TEST")
             print(image.size)
-            image = self.transform(image, 1600)
+            image = self.transform(image)
 
         if self.target_transform:
             label = self.target_transform(label)

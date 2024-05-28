@@ -42,8 +42,7 @@ class CnnModelBoundingBoxes(nn.Module):
         )
         self.max_pool2 = nn.MaxPool2d(kernel_size=kernel_size - 1, stride=2)
         self.fc1 = nn.Linear(
-            # 1048576, 256  # für 512x512 Bilder
-            10240000, 256  # für 1600x1600 Bilder
+            1048576, 256  # für 512x512 Bilder
         )
         self.relu1 = nn.ReLU()
         self.fc2 = nn.Linear(256, 4)

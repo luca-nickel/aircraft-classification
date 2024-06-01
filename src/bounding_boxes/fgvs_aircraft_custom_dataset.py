@@ -52,11 +52,10 @@ class FgvcAircraftBbox(VisionDataset):
         image = PIL.Image.open(image_file).convert("RGB")
 
         if self.transform:
-            print("TEST")
-            print(image.size)
             image = self.transform(image)
 
         if self.target_transform:
+            # Scale the coordinates by 4
             label = self.target_transform(label)
 
         return image, label

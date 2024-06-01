@@ -74,12 +74,13 @@ class TransformsService:
                 # converts Pil image to tensor as well as pads the image
                 PadImageAfter(size=1600),
                 # transforms.Grayscale(num_output_channels=3), maybe grayscale ???
-                v2.Resize(size=(512, 512)),
-                # v2.ToDtype(torch.float32),
-                v2.Normalize(mean=(0, 0, 0), std=(1, 1, 1)),  # normalize between 0 and 1
+                # the label Coordinates have to be scaled by 4 (x/4)
+                v2.Resize(size=(400, 400)),
+                v2.ToDtype(torch.float32),
+                #v2.Normalize(mean=(0, 0, 0), std=(1, 1, 1)),  # normalize between 0 and 1
                 # !! ROTATION ALSO TRANSFORM Box Coordinates...!!!!!
                 # v2.RandomRotation(degrees=15),  # bounding boxes can not have rotation
-                v2.ColorJitter(),
+                v2.ColorJitter()
                 # !! ALSO TRANSFORM Box Coordinates to Upside Down then...!!!!!
                 # v2.RandomHorizontalFlip()
             ]
@@ -99,6 +100,21 @@ class TransformsService:
                 v2.Normalize(mean=(0, 0, 0), std=(1, 1, 1)),  # normalize between 0 and 1
             ]
         )
+
+    @staticmethod
+    def scale_coordinates(factor: int):
+        """
+            Scales the coordinates by a factor
+
+        :param factor: int
+        :return: transform
+        """
+        return v2.Compose(
+            [
+                v2.Lambda(lambda x: x / factor)
+            ]
+        )
+
 
     def get_transforms(self):
         return self.transforms

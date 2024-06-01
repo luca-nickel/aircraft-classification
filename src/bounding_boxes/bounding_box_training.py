@@ -34,12 +34,14 @@ class BoundingBoxTraining:
             file="images_bounding_box_train.txt",
             download=False,
             transform=transform_service.get_transforms(),
+            target_transform=transform_service.scale_coordinates(4)
         )
         dataset_test = FgvcAircraftBbox(
             root=self.parameters["dataset_path"],
             file="images_bounding_box_test.txt",
             download=False,
             transform=transform_service.get_transforms(),
+            target_transform=transform_service.scale_coordinates(4)
         )
         len_tsl = len(dataset_train)
         print(len_tsl)

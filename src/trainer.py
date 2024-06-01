@@ -75,7 +75,7 @@ class ModelTrainer:
                 x = z[0]
 
                 """
-                To Visualize Input Image
+                # To Visualize Input Image
                 toImgTransform = v2.ToPILImage()
                 tensorImg = x[0]
                 img = toImgTransform(tensorImg)
@@ -111,6 +111,7 @@ class ModelTrainer:
                 epochTestArr = self.test_model(
                     self.test_dataloader, self.model, self.loss
                 )
+                print(epochTestArr)
 
         now = datetime.now()
         end_time = now.strftime("%Y-%m-%d_%H_%M_%S")

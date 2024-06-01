@@ -8,14 +8,14 @@ dataset_path: "C:\\Projekte\\LearningSoftcomputing\\aircraft-classification\\dat
 data_augmentation_pipeline: bounding_box_base_pipeline
 
 #Specify model hyperparameters
-num_epoch: 3
+num_epoch: 5
 lr: 0.001
 l2_regularisation_factor: 0
-batch_size: 1
+batch_size: 4
 
 model_name: "base_test"
 
 #specify logging info
 logging_interval: 100
 
-result_folder: "C:\\Projekte\\LearningSoftcomputing\\aircraft-classification\\data\\output\\"
+result_folder: "C:\\Projekte\\LearningSoftcomputing\\aircraft-classification\\src\\bounding_boxes\\output\\results\\"

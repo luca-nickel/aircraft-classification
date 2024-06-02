@@ -1,10 +1,9 @@
 import os
-from datetime import datetime
-
 import torch
 import yaml
-from yaml import SafeLoader
 
+from yaml import SafeLoader
+from datetime import datetime
 from src.bounding_boxes.fgvs_aircraft_custom_dataset import FgvcAircraftBbox
 from src.bounding_boxes.model_architecture.cnn_bounding_boxes_architecture import (
     CnnModelBoundingBoxes,
@@ -35,16 +34,18 @@ class BoundingBoxTraining:
             file="images_bounding_box_train.txt",
             download=False,
             transform=transform_service.get_transforms(),
+            target_transform=transform_service.scale_coordinates(4)
         )
         dataset_test = FgvcAircraftBbox(
             root=self.parameters["dataset_path"],
             file="images_bounding_box_test.txt",
             download=False,
             transform=transform_service.get_transforms(),
+            target_transform=transform_service.scale_coordinates(4)
         )
         len_tsl = len(dataset_train)
         print(len_tsl)
-        model = CnnModelBoundingBoxes(224)
+        model = CnnModelBoundingBoxes(512)
         # loss_func = torch.nn.CrossEntropyLoss()  # classyfi
         loss_func = torch.nn.MSELoss()  # MSE
         lr = self.parameters["lr"]

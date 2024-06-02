@@ -5,6 +5,8 @@ from torch.utils.data import DataLoader
 from datetime import datetime
 from torch.utils.tensorboard import SummaryWriter
 from src.logging.export_service import ExportService
+from src.preprocessing.transforms_service import TransformsService
+from torchvision.transforms import transforms as v2
 
 # Check for Gpu
 if torch.cuda.is_available():
@@ -12,18 +14,21 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
+device = torch.device("cpu")
+print("Device: ", device)
+
 
 class ModelTrainer:
 
     def __init__(
-        self,
-        parameters,
-        tr_dataset,
-        test_dataset,
-        model,
-        loss_func,
-        optimizer,
-        exporter: ExportService,
+            self,
+            parameters,
+            tr_dataset,
+            test_dataset,
+            model,
+            loss_func,
+            optimizer,
+            exporter: ExportService,
     ):
         now = datetime.now()
         start_time = now.strftime("%Y-%m-%d_%H_%M_%S")
@@ -49,6 +54,7 @@ class ModelTrainer:
             num_workers=0,
         )
         # todo fix some name to identify run
+
         self.writer = SummaryWriter(
             os.path.join(
                 "logs",
@@ -56,6 +62,7 @@ class ModelTrainer:
                 f"{self.l2_regularisation_factor}",
             )
         )
+
         self.model = model
         model.to(device)
         self.loss = loss_func
@@ -65,8 +72,17 @@ class ModelTrainer:
         for e in range(self.num_epoch):
             self.model.train()
             for i, z in enumerate(self.train_dataloader):
-                # todo check ?? the label dimensions etc are mixed up if including batch_size??
                 x = z[0]
+
+                """
+                # To Visualize Input Image
+                toImgTransform = v2.ToPILImage()
+                tensorImg = x[0]
+                img = toImgTransform(tensorImg)
+                img.show()
+                """
+
+                #  test show image
                 y = z[1]
                 loss_val, model_out = self.training_step(
                     self.model, x, y, self.loss, self.optimizer
@@ -95,6 +111,7 @@ class ModelTrainer:
                 epochTestArr = self.test_model(
                     self.test_dataloader, self.model, self.loss
                 )
+                print(epochTestArr)
 
         now = datetime.now()
         end_time = now.strftime("%Y-%m-%d_%H_%M_%S")

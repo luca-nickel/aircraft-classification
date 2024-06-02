@@ -55,6 +55,7 @@ class FgvcAircraftBbox(VisionDataset):
             image = self.transform(image)
 
         if self.target_transform:
+            # Scale the coordinates by 4
             label = self.target_transform(label)
 
         return image, label

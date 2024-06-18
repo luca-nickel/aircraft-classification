@@ -92,7 +92,7 @@ class Trainer:
                 loss = self.calc_step(mini_batch, target)
                 epoch_loss += loss
                 step_count += 1
-
+        self.model.set_to_val()
         for mini_batch, target in self.train_loader:
             # Calculate a training step
             epoch_acc += self.model.get_accuracy(mini_batch, target)
@@ -112,7 +112,7 @@ class Trainer:
         finish_reason = "Training did not start"
 
         for epoch in range(epochs):
-            self.logger.set_step(epoch)
+            self.logger.set_step(epoch + 1)
             # Try block for catching keyboard interrupt
             try:
 

@@ -35,12 +35,13 @@ class TransformsService:
                 v2.PILToTensor(),
                 # transforms.Grayscale(num_output_channels=3), maybe grayscale ???
                 # v2.Grayscale(num_output_channels=1),
-                v2.Resize(size=(224, 224)),
+                v2.Resize(size=(227, 227)),
                 v2.ToDtype(torch.float32),
-                # v2.Normalize(
-                #     mean=(0, 0, 0), std=(1, 1, 1)
-                # ),  # normalize between 0 and 1
                 v2.Lambda(lambda x: x / 255.0),
+                # v2.Normalize(
+                #     mean=[122.8162, 130.6217, 136.4014],
+                #     std=[49.2413, 48.9828, 54.8646],
+                # ),
             ]
         )
 
@@ -60,8 +61,10 @@ class TransformsService:
         return v2.Compose(
             [
                 # TransformsService.default_classification_pipeline_val(),
-                v2.RandomRotation(degrees=15),
-                v2.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5, hue=0.25),
+                v2.RandomRotation(degrees=25),
+                # v2.ColorJitter(
+                #     brightness=0.25, contrast=0.25, saturation=0.25, hue=0.125
+                # ),
                 v2.RandomHorizontalFlip(),
             ]
         )

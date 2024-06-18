@@ -170,3 +170,5 @@ cython_debug/
 
 
 settings.json
+
+*.pt

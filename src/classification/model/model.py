@@ -1,4 +1,5 @@
 import torch
+import matplotlib.pyplot as plt
 
 
 class Model:
@@ -97,3 +98,51 @@ class Model:
         _, predicted = torch.max(prediction.data, 1)
         correct = (predicted == target).sum().item()
         return correct / target.size(0)
+
+    def plot_accuracy(self, dataloader, class_names):
+        self.net.eval()
+        class_correct = list(0.0 for i in range(len(class_names)))
+        class_total = list(0.0 for i in range(len(class_names)))
+        with torch.no_grad():
+            for data in dataloader:
+                images, labels = data
+                images, labels = self._prepare_data(images, labels)
+                outputs = self.net(images)
+                _, predicted = torch.max(outputs, 1)
+                c = (predicted == labels).squeeze()
+                for i in range(len(labels)):  # Use actual batch size
+                    label = labels[i]
+                    class_correct[label] += c[i].item()
+                    class_total[label] += 1
+
+        accuracies = [
+            100 * class_correct[i] / class_total[i] for i in range(len(class_names))
+        ]
+
+        # Calculate total accuracy
+        total_accuracy = 100 * sum(class_correct) / sum(class_total)
+        print("Total Accuracy : %2d %%" % total_accuracy)
+
+        # Append total accuracy to the list of accuracies
+        accuracies.append(total_accuracy)
+        class_names.append("Total")
+
+        # Plotting
+        bars = plt.bar(class_names, accuracies)
+        plt.xlabel("Classes")
+        plt.ylabel("Accuracy")
+        plt.title("Accuracy of each class")
+
+        # Add percentages on top of each bar
+        for bar in bars:
+            yval = bar.get_height()
+            plt.text(
+                bar.get_x() + bar.get_width() / 2,
+                yval + 1,
+                round(yval, 2),
+                ha="center",
+                va="bottom",
+            )
+
+        plt.show()
+        self.net.train()

@@ -13,7 +13,6 @@ class ExportService:
     """
 
     def __init__(self, folder_path):
-
         self.folder_path = folder_path
         if not os.path.exists(self.folder_path):
             os.makedirs(self.folder_path)

@@ -1,6 +1,7 @@
 import os
 import torch
 import yaml
+from torchvision.models.detection import FasterRCNN_ResNet50_FPN_V2_Weights, fasterrcnn_resnet50_fpn_v2
 
 from yaml import SafeLoader
 from datetime import datetime
@@ -14,8 +15,9 @@ from src.trainer import ModelTrainer
 
 
 class BoundingBoxTraining:
-    def __init__(self):
+    def __init__(self, model):
         self.parameters = {}
+        self.model = model
         path = os.path.join("..", "..", "data", "config", "base_config.yml")
         with open(path, "r", encoding="utf-8") as stream:
             # Converts yaml document to python object
@@ -45,27 +47,29 @@ class BoundingBoxTraining:
         )
         len_tsl = len(dataset_train)
         print(len_tsl)
-        model = CnnModelBoundingBoxes(512)
+
         # loss_func = torch.nn.CrossEntropyLoss()  # classyfi
         loss_func = torch.nn.MSELoss()  # MSE
         lr = self.parameters["lr"]
         l2_regularisation_factor = self.parameters["l2_regularisation_factor"]
         optimizer = torch.optim.Adam(
-            model.parameters(), lr=lr, weight_decay=l2_regularisation_factor
+            self.model.parameters(), lr=lr, weight_decay=l2_regularisation_factor
         )
         trainer = ModelTrainer(
             self.parameters,
             dataset_train,
             dataset_test,
-            model,
+            self.model,
             loss_func,
             optimizer,
             exporter,
         )
-        model = trainer.run()
-        exporter.store_model(model, self.parameters["model_name"])
+        self.model = trainer.run()
+        exporter.store_model(self.model, self.parameters["model_name"])
 
 
-exe = BoundingBoxTraining()
+model_custom = CnnModelBoundingBoxes(512)
+###
+exe = BoundingBoxTraining(model_custom)
 print(torch.cuda.is_available())
 exe.run()

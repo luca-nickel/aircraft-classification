@@ -24,7 +24,7 @@ class CnnModelBoundingBoxes(nn.Module):
             dilation=1,
             stride=1,
         )
-        self.max_pool1 = nn.MaxPool2d(kernel_size=kernel_size - 1, stride=2)
+        self.max_pool1 = nn.MaxPool2d(kernel_size=kernel_size - 1, stride=1)
 
         self.conv_layer3 = nn.Conv2d(
             in_channels=out_channels * 2,

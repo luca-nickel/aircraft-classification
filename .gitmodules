@@ -1,3 +1,0 @@
-[submodule "src/classification/vit-finetune"]
-	path = src/classification/vit-finetune
-	url = https://github.com/bwconrad/vit-finetune.git

@@ -11,7 +11,7 @@ trainer:
   max_steps: 5000
   val_check_interval: 500
 model:
-  model_name: vit-l16-224
+  model_name: vit-b32-384
   training_mode: full
   optimizer: sgd
   lr: 0.01
@@ -22,7 +22,7 @@ model:
 data:
   dataset: aircraft
   root: data/
-  size: 224
+  size: 384
   batch_size: 128
   workers: 4
 model_checkpoint:

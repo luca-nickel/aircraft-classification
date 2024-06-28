@@ -67,6 +67,24 @@ DATASET_DICT = {
         partial(FGVCAircraft, split="test", download=True),
         100,
     ],
+    "aircraft_family": [
+        partial(FGVCAircraft, split="train", annotation_level="family", download=True),
+        partial(FGVCAircraft, split="val", annotation_level="family", download=True),
+        partial(FGVCAircraft, split="test", annotation_level="family", download=True),
+        70,
+    ],
+    "aircraft_manufacturer": [
+        partial(
+            FGVCAircraft, split="train", annotation_level="manufacturer", download=True
+        ),
+        partial(
+            FGVCAircraft, split="val", annotation_level="manufacturer", download=True
+        ),
+        partial(
+            FGVCAircraft, split="test", annotation_level="manufacturer", download=True
+        ),
+        30,
+    ],
     "cars": [
         partial(StanfordCars, split="train", download=True),
         partial(StanfordCars, split="test", download=True),
@@ -170,9 +188,11 @@ class DataModule(pl.LightningDataModule):
                     scale=(self.min_scale, self.max_scale),
                 ),
                 transforms.RandomHorizontalFlip(self.flip_prob),
-                transforms.TrivialAugmentWide()
-                if self.use_trivial_aug
-                else transforms.RandAugment(self.rand_aug_n, self.rand_aug_m),
+                (
+                    transforms.TrivialAugmentWide()
+                    if self.use_trivial_aug
+                    else transforms.RandAugment(self.rand_aug_n, self.rand_aug_m)
+                ),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=self.mean, std=self.std),
                 transforms.RandomErasing(p=self.erase_prob),

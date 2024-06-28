@@ -21,7 +21,7 @@ model:
   warmup_steps: 500
 data:
   dataset: aircraft
-  root: ../../../data/input/fgvc-aircraft-2013b/data
+  root: ../../../data/input
   size: 224
   batch_size: 128
   workers: 4

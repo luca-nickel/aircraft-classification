@@ -5,7 +5,12 @@
 dataset_path: "C:\\Projekte\\LearningSoftcomputing\\aircraft-classification\\data\\input\\"
 
 #Todo: maybe instead of name of piepline, specify the transforms to use
-data_augmentation_pipeline: bounding_box_base_pipeline
+function_name_transform: transform_pipeline
+function_name_transforms: transforms_pipeline
+function_name_target_transforms: target_transform_pipeline
+
+image_size: 1600 #with paading to same size
+rescale_factor: 2 #recal factor for the image size
 
 #Specify model hyperparameters
 num_epoch: 5

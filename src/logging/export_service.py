@@ -42,6 +42,8 @@ class ExportService:
             + str(now.hour)
             + str(now.minute)
         )
+        torch.onnx.export(model, x, "faster_rcnn.onnx", opset_version=11)
+
         model_scripted.save(
             os.path.join(self.folder_path, model_name + date_time_as_str + ".pt")
         )  # Save

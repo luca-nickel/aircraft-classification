@@ -17,6 +17,7 @@ from src.trainer import ModelTrainer
 class BoundingBoxTraining:
     def __init__(self, model):
         self.parameters = {}
+        self.transform_pipeline: list = self.parameters["data_augmentation_pipeline"]
         self.model = model
         path = os.path.join("..", "..", "data", "config", "base_config.yml")
         with open(path, "r", encoding="utf-8") as stream:
@@ -29,21 +30,28 @@ class BoundingBoxTraining:
         print("Beginn Time: " + begin_time)
         export_path = os.path.join(self.parameters["result_folder"], begin_time)
         exporter: ExportService = ExportService(export_path)
-        transform_pipeline: list = self.parameters["data_augmentation_pipeline"]
-        transform_service: TransformsService = TransformsService(transform_pipeline)
+        transform_pipeline: list = self.parameters["function_name_transform"]
+        transforms_pipeline: list = self.parameters["function_name_transforms"]
+        target_transform_pipeline: list = self.parameters["function_name_target_transforms"]
+        transform_service: TransformsService = TransformsService(transform_pipeline,
+                                                                 transforms_pipeline,
+                                                                 target_transform_pipeline,
+                                                                 self.parameters)
         dataset_train = FgvcAircraftBbox(
             root=self.parameters["dataset_path"],
             file="images_bounding_box_train.txt",
             download=False,
-            transform=transform_service.get_transforms(),
-            target_transform=transform_service.scale_coordinates(4)
+            transform=transform_service.get_transform(),
+            transforms=transform_service.get_transforms(),
+            target_transform=transform_service.get_target_transforms(self.parameters["rescale_factor"])
         )
         dataset_test = FgvcAircraftBbox(
             root=self.parameters["dataset_path"],
             file="images_bounding_box_test.txt",
             download=False,
-            transform=transform_service.get_transforms(),
-            target_transform=transform_service.scale_coordinates(4)
+            transform=transform_service.get_transform(),
+            transforms=transform_service.get_transforms(),
+            target_transform=transform_service.get_target_transforms(self.parameters["rescale_factor"])
         )
         len_tsl = len(dataset_train)
         print(len_tsl)

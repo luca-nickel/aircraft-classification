@@ -22,9 +22,9 @@ model:
 data:
   dataset: aircraft
   root: ../../../data/input
-  size: 336
+  size: 280
   batch_size: 128
-  workers: 2
+  workers: 4
 model_checkpoint:
   filename: best-step-{step}-{val_acc:.4f}
   monitor: val_acc

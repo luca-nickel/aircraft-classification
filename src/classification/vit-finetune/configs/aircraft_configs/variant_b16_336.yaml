@@ -22,7 +22,7 @@ model:
 data:
   dataset: aircraft
   root: ../../../data/input
-  size: 448
+  size: 336
   batch_size: 128
   workers: 4
 model_checkpoint:

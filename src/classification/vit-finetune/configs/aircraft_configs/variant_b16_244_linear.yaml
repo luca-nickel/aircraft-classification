@@ -12,7 +12,7 @@ trainer:
   val_check_interval: 250
 model:
   model_name: vit-b16-224-in21k
-  training_mode: full
+  training_mode: linear
   optimizer: sgd
   lr: 0.01
   momentum: 0.9
@@ -22,7 +22,7 @@ model:
 data:
   dataset: aircraft
   root: ../../../data/input
-  size: 280
+  size: 224
   batch_size: 128
   workers: 4
 model_checkpoint:

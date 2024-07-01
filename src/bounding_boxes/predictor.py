@@ -3,19 +3,19 @@ import os
 import PIL
 import torch
 import yaml
-from torchvision.io.image import read_image
-from torchvision.models.detection import fasterrcnn_resnet50_fpn_v2, FasterRCNN_ResNet50_FPN_V2_Weights
-from torchvision.utils import draw_bounding_boxes
+from torchvision.models.detection import FasterRCNN_ResNet50_FPN_V2_Weights
 from torchvision.transforms.functional import to_pil_image
+from torchvision.utils import draw_bounding_boxes
 from yaml import SafeLoader
-
+from torchvision.transforms import v2
 from src.preprocessing.transforms_service import TransformsService
 
 
 class Predictor:
-    def __init__(self, model, image, device):
+    def __init__(self, model, live_image, device):
         self.model = model
-        self.image = image
+        self.live_image = live_image
+        #self.live_image.show()
         self.device = device
         self.parameters = {}
         self.model = model.to(self.device)
@@ -26,21 +26,23 @@ class Predictor:
 
     def predict(self):
         self.model.eval()
-        weights = FasterRCNN_ResNet50_FPN_V2_Weights.DEFAULT
-        #preprocess = weights.transforms()
-        #batch = [preprocess(self.image)]
-        transform_pipeline = 'bounding_box_base_pipeline'
-        transform_service: TransformsService = TransformsService(transform_pipeline, self.parameters)
-        preprocessed_img = transform_service.get_transforms()(self.image).to(self.device)
-        prediction = self.model(preprocessed_img)
-        labels = [weights.meta["categories"][i] for i in prediction["labels"]]
-        box = draw_bounding_boxes(preprocessed_img, boxes=prediction["boxes"],
-                                  labels=labels,
+        prediction_transforms = TransformsService(self.parameters)
+        processed_image = prediction_transforms.get_prediction_transform()(self.live_image).to(self.device)
+        # debug_img = to_pil_image(processed_image)
+        # debug_img.show()
+        prediction = self.model([processed_image])
+        print(prediction)
+        # labels = [weights.meta["categories"][i] for i in prediction["labels"]]
+        _, prediction_boxes = prediction
+        prediction_boxes = torch.squeeze(prediction_boxes[0]['boxes'])
+        tensor_live_img = v2.functional.to_tensor(self.live_image)
+        box = draw_bounding_boxes(tensor_live_img,
+                                  boxes=prediction_boxes,
+                                  labels=['aircraft'],
                                   colors="red",
                                   width=1, font_size=30)
         im = to_pil_image(box.detach())
         im.show()
-        #image = self.image.to(self.device)
 
     def __call__(self):
         return self.predict()
@@ -51,8 +53,10 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 load_model = torch.jit.load(
-    "C:\\Projekte\\LearningSoftcomputing\\aircraft-classification\\data\\output\\2024-06-01_14_50_52\\boundingBox_162024_1534_v1.pt")
-img_path = "C:\\Users\\admin\\Downloads\\test_1.PNG"
+    "C:\\Projekte\\LearningSoftcomputing\\aircraft-classification\\src\\bounding_boxes\\output\\results\\2024-06"
+    "-30_23_55_15\\base_test172024_042.pt")
+img_path = "C:\\Projekte\\LearningSoftcomputing\\aircraft-classification\\data\\input\\fgvc-aircraft-2013b\\data" \
+           "\\images\\0056589.jpg"
 image = PIL.Image.open(img_path).convert("RGB")
 predictor = Predictor(load_model, image, device)
 predictor()

@@ -72,8 +72,6 @@ class FgvcAircraftBbox(VisionDataset):
             # Scale the coordinates by 4
             label = self.target_transform(label)
 
-
-
         return image, label
 
     def _download(self) -> None:

@@ -25,10 +25,17 @@ batch = [preprocess(img)]
 # Step 4: Use the model and visualize the prediction
 prediction = model(batch)[0]
 labels = [weights.meta["categories"][i] for i in prediction["labels"]]
+"""
+# Print labels and their corresponding indices
+catergories = weights.meta["categories"]
+for i in range(len(catergories)):
+    print(f"{catergories[i]}: index {i}")
+"""
+"""    
 print(prediction)
 box = draw_bounding_boxes(img, boxes=prediction["boxes"],
                           labels=labels,
                           colors="red",
                           width=1, font_size=30)
 im = to_pil_image(box.detach())
-im.show()
+im.show()"""

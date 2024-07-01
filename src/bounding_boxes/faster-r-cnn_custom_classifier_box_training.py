@@ -46,11 +46,16 @@ class BoundingBoxTraining:
                                                                       self.transforms_pipeline,
                                                                       self.target_transform_pipeline,
                                                                       self.parameters)
+        params = [p for p in self.model.parameters() if p.requires_grad]
+        self.optimizer = torch.optim.SGD(params,
+                                         lr=0.005,
+                                         momentum=0.9,
+                                         weight_decay=0.0005)
         self.dataset_train = FgvcAircraftBbox(
             root=self.parameters["dataset_path"],
             file="images_bounding_box_train.txt",
             download=False,
-            transforms=self.transform_service.get_transforms(),
+            transforms=self.transform_service.get_training_transform(),
             transform=None,
             target_transform=None
         )
@@ -58,7 +63,7 @@ class BoundingBoxTraining:
             root=self.parameters["dataset_path"],
             file="images_bounding_box_test.txt",
             download=False,
-            transforms=self.transform_service.get_transforms(),
+            transforms=self.transform_service.get_training_transform(),
             transform=None,
             target_transform=None
         )
@@ -82,79 +87,6 @@ class BoundingBoxTraining:
         )
         len_tsl = len(self.dataset_train)
         print(len_tsl)
-
-    def get_object_detection_model(self, num_classes=3,
-                                   feature_extraction=True):
-        """
-        Inputs
-            num_classes: int
-                Number of classes to predict. Must include the
-                background which is class 0 by definition!
-            feature_extraction: bool
-                Flag indicating whether to freeze the pre-trained
-                weights. If set to True the pre-trained weights will be
-                frozen and not be updated during.
-        Returns
-            model: FasterRCNN
-        """
-        # Load the pretrained faster r-cnn model.
-        model = fasterrcnn_resnet50_fpn_v2(pretrained=True)
-        # If True, the pre-trained weights will be frozen.
-        if feature_extraction:
-            for p in model.parameters():
-                p.requires_grad = False
-        # Replace the original 91 class top layer with a new layer
-        # tailored for num_classes.
-        in_feats = model.roi_heads.box_predictor.cls_score.in_features
-        model.roi_heads.box_predictor = FastRCNNPredictor(in_feats, num_classes)
-        return model
-
-    def train_batch(self, X, y, batch, model, optimizer, device):
-        """
-        Uses back propagation to train a model.
-        Inputs
-            batch: tuple
-                Tuple containing a batch from the Dataloader.
-            model: torch model
-            optimizer: torch optimizer
-            device: str
-                Indicates which device (CPU/GPU) to use.
-        Returns
-            loss: float
-                Sum of the batch losses.
-            losses: dict
-                Dictionary containing the individual losses.
-        """
-        model.train()
-        optimizer.zero_grad()
-        losses = model(X, y)
-        loss = sum(loss for loss in losses.values())
-        loss.backward()
-        optimizer.step()
-        return loss, losses
-
-    @torch.no_grad()
-    def validate_batch(self, X, y, batch, model, optimizer, device):
-        """
-        Evaluates a model's loss value using validation data.
-        Inputs
-            batch: tuple
-                Tuple containing a batch from the Dataloader.
-            model: torch model
-            optimizer: torch optimizer
-            device: str
-                Indicates which device (CPU/GPU) to use.
-        Returns
-            loss: float
-                Sum of the batch losses.
-            losses: dict
-                Dictionary containing the individual losses.
-        """
-        model.train()
-        optimizer.zero_grad()
-        losses = model(X, y)
-        loss = sum(loss for loss in losses.values())
-        return loss, losses
 
     def run(self):
 
@@ -188,8 +120,12 @@ class BoundingBoxTraining:
                 targets.append(d)
                 c += 1
 
-            output = self.model(images, targets)
-            self.writer.add_scalar("Loss/train", output['loss_box_reg'].item(), self.train_log_counter)
+            self.optimizer.zero_grad()
+            losses = self.model(images, targets)
+            loss = sum(loss for loss in losses.values())
+            loss.backward()
+            self.optimizer.step()
+            self.writer.add_scalar("Loss/train", loss, self.train_log_counter)
             self.train_log_counter += 1
             if i % 5 == 0:
                 print(f"Batch: {i}")

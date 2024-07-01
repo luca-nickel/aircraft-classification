@@ -23,11 +23,12 @@ else:
 
 print(device)
 
+#todo eigentlich bilder ohne Flugzeuge... aber erstmal egal
 
 class BoundingBoxTraining:
     def __init__(self, model):
-        self.parameters = {}
         self.model = model.to(device)
+        self.parameters = {}
         path = os.path.join("..", "..", "data", "config", "base_config.yml")
         with open(path, "r", encoding="utf-8") as stream:
             # Converts yaml document to python object
@@ -42,15 +43,17 @@ class BoundingBoxTraining:
         self.transform_pipeline: list = self.parameters["function_name_transform"]
         self.transforms_pipeline: list = self.parameters["function_name_transforms"]
         self.target_transform_pipeline: list = self.parameters["function_name_target_transforms"]
-        self.transform_service: TransformsService = TransformsService(self.transform_pipeline,
-                                                                      self.transforms_pipeline,
-                                                                      self.target_transform_pipeline,
-                                                                      self.parameters)
+        self.transform_service: TransformsService = TransformsService(self.parameters)
+        params = [p for p in self.model.parameters() if p.requires_grad]
+        self.optimizer = torch.optim.SGD(params,
+                                         lr=self.parameters["lr"],
+                                         momentum=self.parameters["momentum"],
+                                         weight_decay=self.parameters["weight_decay"])
         self.dataset_train = FgvcAircraftBbox(
             root=self.parameters["dataset_path"],
             file="images_bounding_box_train.txt",
             download=False,
-            transforms=self.transform_service.get_transforms(),
+            transforms=self.transform_service.get_training_transform(),
             transform=None,
             target_transform=None
         )
@@ -58,7 +61,7 @@ class BoundingBoxTraining:
             root=self.parameters["dataset_path"],
             file="images_bounding_box_test.txt",
             download=False,
-            transforms=self.transform_service.get_transforms(),
+            transforms=self.transform_service.get_training_transform(),
             transform=None,
             target_transform=None
         )
@@ -83,7 +86,8 @@ class BoundingBoxTraining:
         len_tsl = len(self.dataset_train)
         print(len_tsl)
 
-    def get_object_detection_model(self, num_classes=3,
+    @staticmethod
+    def get_object_detection_model(num_classes=3,
                                    feature_extraction=True):
         """
         Inputs
@@ -109,7 +113,7 @@ class BoundingBoxTraining:
         model.roi_heads.box_predictor = FastRCNNPredictor(in_feats, num_classes)
         return model
 
-    def train_batch(self, X, y, batch, model, optimizer, device):
+    def train_batch(self, X, y, model, optimizer):
         """
         Uses back propagation to train a model.
         Inputs
@@ -131,40 +135,19 @@ class BoundingBoxTraining:
         loss = sum(loss for loss in losses.values())
         loss.backward()
         optimizer.step()
-        return loss, losses
-
-    @torch.no_grad()
-    def validate_batch(self, X, y, batch, model, optimizer, device):
-        """
-        Evaluates a model's loss value using validation data.
-        Inputs
-            batch: tuple
-                Tuple containing a batch from the Dataloader.
-            model: torch model
-            optimizer: torch optimizer
-            device: str
-                Indicates which device (CPU/GPU) to use.
-        Returns
-            loss: float
-                Sum of the batch losses.
-            losses: dict
-                Dictionary containing the individual losses.
-        """
-        model.train()
-        optimizer.zero_grad()
-        losses = model(X, y)
-        loss = sum(loss for loss in losses.values())
+        self.writer.add_scalar("Loss/train", loss, self.train_log_counter)
+        self.train_log_counter += 1
         return loss, losses
 
     def run(self):
-
         epochs = self.parameters["num_epoch"]
         for epoch in range(epochs):
             print(f"Epoch: {epoch}")
-            self.train_epoch(self.train_log_counter)
+            self.train_epoch()
             self.test_model(epoch)
+        self.exporter.store_model(self.model, self.parameters["model_name"])
 
-    def train_epoch(self, log_idx):
+    def train_epoch(self):
         self.model.train()
         # returns batches
         for i, z in enumerate(self.train_dataloader):
@@ -181,24 +164,26 @@ class BoundingBoxTraining:
                 box = z[1][c].to(device)
                 box = box.unsqueeze(0)
                 # In COCO DateSet, which faste r-cnn was trained on label=5 is airplane
-                label = torch.tensor(5, dtype=torch.int64).to(device)
+                label = torch.tensor(1, dtype=torch.int64).to(device)
                 label = label.unsqueeze(0)
                 # targets supposed to be a list of dicts with keys 'boxes' and 'labels'
                 d = {'boxes': box, 'labels': label}
                 targets.append(d)
                 c += 1
 
-            output = self.model(images, targets)
-            self.writer.add_scalar("Loss/train", output['loss_box_reg'].item(), self.train_log_counter)
+            self.optimizer.zero_grad()
+            losses = self.model(images, targets)
+            loss = sum(loss for loss in losses.values())
+            loss.backward()
+            self.optimizer.step()
+            self.writer.add_scalar("Loss/train", loss, self.train_log_counter)
             self.train_log_counter += 1
-            if i % 5 == 0:
-                print(f"Batch: {i}")
-
-        self.exporter.store_model(self.model, self.parameters["model_name"])
+            if self.train_log_counter % 50 == 0:
+                print(f"Batch: {i}: loss={loss}")
 
     def test_model(self, epoch):
-        self.model.eval()
-        self.test_log_counter = 0
+        print("Testing Model")
+        self.model.train()
         for i, z in enumerate(self.test_dataloader):
             images = z[0].to(device)
             targets = []
@@ -211,7 +196,6 @@ class BoundingBoxTraining:
                 img = toImgTransform(image)
                 img.show()
                 """
-
                 box = z[1][c].to(device)
                 box_labels[c] = box
                 box = box.unsqueeze(0)
@@ -222,25 +206,19 @@ class BoundingBoxTraining:
                 targets.append(d)
                 c += 1
             self.test_log_counter += 1
-            output = self.model(images, targets)
-            # Extract the 'boxes' values from each dictionary
-            boxes_list = []
-            for d in output:
-                if len(d['boxes']) > 0:
-                    boxes_list.append(d['boxes'][0].to(device))
-                else:
-                    empty = torch.zeros(4).to(device)
-                    boxes_list.append(empty)
+            self.optimizer.zero_grad()
+            losses = self.model(images, targets)
+            loss = sum(loss for loss in losses.values())
+            self.writer.add_scalar(f"Loss/test", loss, self.test_log_counter)
 
-            # Stack the list of tensors into a single tensor
-            output_tensor = torch.stack(boxes_list, dim=0).to(device)
-
-            loss = F.mse_loss(output_tensor, box_labels.to(device), reduction='mean').to(device)
-            self.writer.add_scalar(f"Loss/test_{epoch}", loss.item(), self.test_log_counter)
+    def validate_model(self):
+        # todo finish
+        img = torch.rand(3, 400, 400)
+        self.model.eval()
+        result = self.model(img)
 
 
 weights = FasterRCNN_ResNet50_FPN_V2_Weights.DEFAULT
-model_faster = fasterrcnn_resnet50_fpn_v2(weights=weights, box_score_thresh=0.90)
-model_faster.train()
+model_faster = BoundingBoxTraining.get_object_detection_model(num_classes=2, feature_extraction=True)
 exe = BoundingBoxTraining(model_faster)
 exe.run()

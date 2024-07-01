@@ -42,7 +42,7 @@ class BoundingBoxTraining:
             file="images_bounding_box_train.txt",
             download=False,
             transform=transform_service.get_transform(),
-            transforms=transform_service.get_transforms(),
+            transforms=transform_service.get_training_transform(),
             target_transform=transform_service.get_target_transforms(self.parameters["rescale_factor"])
         )
         dataset_test = FgvcAircraftBbox(
@@ -50,7 +50,7 @@ class BoundingBoxTraining:
             file="images_bounding_box_test.txt",
             download=False,
             transform=transform_service.get_transform(),
-            transforms=transform_service.get_transforms(),
+            transforms=transform_service.get_training_transform(),
             target_transform=transform_service.get_target_transforms(self.parameters["rescale_factor"])
         )
         len_tsl = len(dataset_train)

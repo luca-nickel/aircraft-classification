@@ -63,10 +63,10 @@ class TransformsService:
         return v2.Compose(
             [
                 # converts Pil image to tensor as well as pads the image
-                pad_image_into_random_position(size=self.config_parameters["image_size"]),
-                rescale_image(self.config_parameters['rescale_factor']),
+                pad_image_and_label_into_random_position(size=self.config_parameters["image_size"]),
+                rescale_image_label(self.config_parameters['rescale_factor']),
                 v2.ToDtype(torch.float32),  # removes RGB color...
-                normalize_image()
+                normalize_image_label()
             ]
         )
 

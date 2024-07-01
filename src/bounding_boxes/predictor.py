@@ -1,6 +1,8 @@
 import os
 
 import PIL
+import cv2
+import numpy as np
 import torch
 import yaml
 from torchvision.models.detection import FasterRCNN_ResNet50_FPN_V2_Weights
@@ -15,9 +17,10 @@ class Predictor:
     def __init__(self, model, live_image, device):
         self.model = model
         self.live_image = live_image
-        #self.live_image.show()
+        # self.live_image.show()
         self.device = device
         self.parameters = {}
+        self.weights = FasterRCNN_ResNet50_FPN_V2_Weights.DEFAULT
         self.model = model.to(self.device)
         path = os.path.join("..", "..", "data", "config", "base_config.yml")
         with open(path, "r", encoding="utf-8") as stream:
@@ -27,25 +30,45 @@ class Predictor:
     def predict(self):
         self.model.eval()
         prediction_transforms = TransformsService(self.parameters)
-        processed_image = prediction_transforms.get_prediction_transform()(self.live_image).to(self.device)
-        # debug_img = to_pil_image(processed_image)
-        # debug_img.show()
+        label_offsets = torch.tensor([0, 0, 0, 0], dtype=torch.float32).to(self.device)
+        processed_image, label_offset = prediction_transforms.get_prediction_transform()(self.live_image, label_offsets)
+        processed_image = processed_image.to(self.device)
+        label_offset = label_offset.to(self.device)
         prediction = self.model([processed_image])
-        print(prediction)
-        # labels = [weights.meta["categories"][i] for i in prediction["labels"]]
-        _, prediction_boxes = prediction
-        prediction_boxes = torch.squeeze(prediction_boxes[0]['boxes'])
-        tensor_live_img = v2.functional.to_tensor(self.live_image)
-        box = draw_bounding_boxes(tensor_live_img,
-                                  boxes=prediction_boxes,
-                                  labels=['aircraft'],
-                                  colors="red",
-                                  width=1, font_size=30)
-        im = to_pil_image(box.detach())
-        im.show()
+        _, prediction = prediction
+        prediction = prediction[0]
+        prediction_boxes = torch.squeeze(prediction['boxes'])
+        true_box_label = self.recalc_bounding_boxes(label_offset, prediction_boxes, self.parameters['rescale_factor'])
+        self.draw_bounding_boxes(self.live_image, true_box_label)
 
     def __call__(self):
         return self.predict()
+
+    @staticmethod
+    def recalc_bounding_boxes(label_offset_tensor, boxes, scale_factor=2):
+        original_box_labels = boxes - label_offset_tensor
+        original_box_labels = original_box_labels * scale_factor
+        original_box_labels = original_box_labels.cpu()
+        return original_box_labels.detach().numpy()
+
+    @staticmethod
+    def draw_bounding_boxes(pil_img, box_coords):
+        top_left = (int(box_coords[0]), int(box_coords[1]))
+        bottom_right = (int(box_coords[2]), int(box_coords[3]))
+        image_np = np.array(pil_img)
+        # Convert PIL image to NumPy array (OpenCV format)
+
+        # Convert RGB to BGR (OpenCV uses BGR format)
+        image_cv = cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR)
+
+        # Draw the bounding box
+        cv2.rectangle(image_cv, top_left, bottom_right, color=(255, 255, 0), thickness=2)
+
+        # Convert BGR back to RGB (if needed to show with PIL)
+        image_np = cv2.cvtColor(image_cv, cv2.COLOR_BGR2RGB)
+        pil_image_with_box = PIL.Image.fromarray(image_np)
+        pil_image_with_box.show()
+        return pil_image_with_box
 
 
 if torch.cuda.is_available():

@@ -63,7 +63,7 @@ class TransformsService:
         return v2.Compose(
             [
                 # converts Pil image to tensor as well as pads the image
-                pad_image_and_label_into_random_position(size=self.config_parameters["image_size"]),
+                pad_image_and_label_into_center_position(size=self.config_parameters["image_size"]),
                 rescale_image_label(self.config_parameters['rescale_factor']),
                 v2.ToDtype(torch.float32),  # removes RGB color...
                 normalize_image_label()
@@ -184,6 +184,58 @@ class pad_image_and_label_into_random_position:
         # Generate random starting points
         start_y = np.random.randint(0, max_height + 1)
         start_x = np.random.randint(0, max_width + 1)
+
+        # Insert the image into the source array at the random position
+        source_array[:, start_y:start_y + h, start_x:start_x + w] = img
+        tensor_img = torch.tensor(source_array, dtype=torch.uint8)
+        """
+        # DEBUGGING
+        toImgTransform = v2.ToPILImage()
+        img = toImgTransform(tensor_img)
+        img.show()
+        """
+
+        # Adjust the label postion of the bounding box
+        label_neu = torch.zeros_like(label)
+        label_neu[0] = start_x + label[0]  # abstand linker bild rand bis erstes flugzeugteil
+        label_neu[1] = start_y + label[1]  # abstand oberer bildrand bis erstes flugzeug
+        label_neu[2] = start_x + label[2]  # abstand linker bild rand bis letztes flugzeugteil
+        label_neu[3] = start_y + label[3]  # abstand oberer bildrand bis letztes flugzeug
+
+        return tensor_img, label_neu
+
+
+class pad_image_and_label_into_center_position:
+    """
+        Pads the image to given size and positions the image at a random position within the padded image
+    """
+
+    def __init__(self, size):
+        self.size = size
+
+    def __call__(self, image, label):  # we assume inputs are always structured like this
+        """
+        For the transformation the image as well as the label have to be adjusted
+
+        For live prediction position the image in center of padding
+
+        :param image:
+        :param label:
+        :return:
+        """
+        # Define the dimensions of the source and the image
+        h = image.height
+        w = image.width
+
+        img = np.array(image)
+        img = np.transpose(img, (2, 0, 1))  # img = (3, h, w)
+
+        # Create the source array with random values
+        source_array = np.random.randint(0, 256, size=(3, self.size, self.size), dtype=np.uint8)
+
+        # Generate random starting points
+        start_y = (self.size - h) // 2
+        start_x = (self.size - w) // 2
 
         # Insert the image into the source array at the random position
         source_array[:, start_y:start_y + h, start_x:start_x + w] = img

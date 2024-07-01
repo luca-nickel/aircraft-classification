@@ -39,8 +39,24 @@ class Predictor:
         _, prediction = prediction
         prediction = prediction[0]
         prediction_boxes = torch.squeeze(prediction['boxes'])
+
+        image_np = np.array(self.live_image)
+
+        if prediction_boxes.shape[0] == 0:
+            print("No object detected")
+            return PIL.Image.fromarray(image_np)
+
         true_box_label = self.recalc_bounding_boxes(label_offset, prediction_boxes, self.parameters['rescale_factor'])
-        self.draw_bounding_boxes(self.live_image, true_box_label)
+        if prediction_boxes.ndim > 1:
+            print("Multiple objects detected")
+            for i in range(prediction_boxes.shape[0]):
+                image_np = self.draw_bounding_boxes(image_np, true_box_label[i])
+        else:
+            image_np = self.draw_bounding_boxes(image_np, true_box_label)
+
+        pil_image_with_box = PIL.Image.fromarray(image_np)
+        #pil_image_with_box.show()
+        return pil_image_with_box
 
     def __call__(self):
         return self.predict()
@@ -53,10 +69,9 @@ class Predictor:
         return original_box_labels.detach().numpy()
 
     @staticmethod
-    def draw_bounding_boxes(pil_img, box_coords):
+    def draw_bounding_boxes(image_np, box_coords):
         top_left = (int(box_coords[0]), int(box_coords[1]))
         bottom_right = (int(box_coords[2]), int(box_coords[3]))
-        image_np = np.array(pil_img)
         # Convert PIL image to NumPy array (OpenCV format)
 
         # Convert RGB to BGR (OpenCV uses BGR format)
@@ -67,20 +82,20 @@ class Predictor:
 
         # Convert BGR back to RGB (if needed to show with PIL)
         image_np = cv2.cvtColor(image_cv, cv2.COLOR_BGR2RGB)
-        pil_image_with_box = PIL.Image.fromarray(image_np)
-        pil_image_with_box.show()
-        return pil_image_with_box
+
+        return image_np
 
 
 if torch.cuda.is_available():
     device = torch.device("cuda")
 else:
     device = torch.device("cpu")
+
 load_model = torch.jit.load(
     "C:\\Projekte\\LearningSoftcomputing\\aircraft-classification\\src\\bounding_boxes\\output\\results\\2024-06"
     "-30_23_55_15\\base_test172024_042.pt")
 img_path = "C:\\Projekte\\LearningSoftcomputing\\aircraft-classification\\data\\input\\fgvc-aircraft-2013b\\data" \
-           "\\images\\0056589.jpg"
+           "\\images\\0063105.jpg"
 image = PIL.Image.open(img_path).convert("RGB")
 predictor = Predictor(load_model, image, device)
 predictor()

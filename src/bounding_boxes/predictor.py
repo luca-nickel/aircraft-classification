@@ -30,6 +30,7 @@ class Predictor:
     def predict(self):
         self.model.eval()
         prediction_transforms = TransformsService(self.parameters)
+        # empty tensor to get the offsets out of the transform
         label_offsets = torch.tensor([0, 0, 0, 0], dtype=torch.float32).to(self.device)
         processed_image, label_offset = prediction_transforms.get_prediction_transform()(self.live_image, label_offsets)
         processed_image = processed_image.to(self.device)

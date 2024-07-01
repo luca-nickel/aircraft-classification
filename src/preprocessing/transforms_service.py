@@ -99,27 +99,6 @@ class normalize_image_label:
         return image, label
 
 
-class normalize_image:
-    """
-        Normalizes the image
-    """
-
-    def __init__(self):
-        pass
-
-    def __call__(self, image):  # we assume inputs are always structured like this
-        """
-        For the transformation the image as well as the label have to be adjusted
-
-        :param image:
-        :return:
-        """
-        # Normalize the image
-        image = v2.functional.normalize(image, mean=[0, 0, 0], std=[1, 1, 1])
-
-        return image
-
-
 class color_jitter_on_image:
     """
         Applies color jitter on the image
@@ -169,29 +148,6 @@ class rescale_image_label:
         label = label / self.factor
 
         return image, label
-
-
-class rescale_image:
-    """
-        Scales the image and the label by a factor
-    """
-
-    def __init__(self, factor):
-        self.factor = factor
-
-    def __call__(self, image):  # we assume inputs are always structured like this
-        """
-        For the transformation the image as well as the label have to be adjusted
-
-        :param image:
-        :param label:
-        :return:
-        """
-        # Scale the image
-        image = v2.functional.resize_image(image, size=[int(image.shape[1] / self.factor),
-                                                        int(image.shape[1] / self.factor)])
-
-        return image
 
 
 class pad_image_and_label_into_random_position:
@@ -247,51 +203,3 @@ class pad_image_and_label_into_random_position:
         label_neu[3] = start_y + label[3]  # abstand oberer bildrand bis letztes flugzeug
 
         return tensor_img, label_neu
-
-
-class pad_image_into_random_position:
-    """
-        Pads the image to given size and positions the image at a random position within the padded image
-    """
-
-    def __init__(self, size):
-        self.size = size
-
-    def __call__(self, image):  # we assume inputs are always structured like this
-        """
-        For the transformation the image as well as the label have to be adjusted
-
-        :param image:
-        :param label:
-        :return:
-        """
-        # Define the dimensions of the source and the image
-        h = image.height
-        w = image.width
-
-        img = np.array(image)
-        img = np.transpose(img, (2, 0, 1))  # img = (3, h, w)
-
-        # Create the source array with random values
-        source_array = np.random.randint(0, 256, size=(3, self.size, self.size), dtype=np.uint8)
-
-        # Calculate the maximum starting points
-        # size because image always square
-        max_height = self.size - h
-        max_width = self.size - w
-
-        # Generate random starting points
-        start_y = np.random.randint(0, max_height + 1)
-        start_x = np.random.randint(0, max_width + 1)
-
-        # Insert the image into the source array at the random position
-        source_array[:, start_y:start_y + h, start_x:start_x + w] = img
-        tensor_img = torch.tensor(source_array, dtype=torch.uint8)
-        """
-        # DEBUGGING
-        toImgTransform = v2.ToPILImage()
-        img = toImgTransform(tensor_img)
-        img.show()
-        """
-
-        return tensor_img

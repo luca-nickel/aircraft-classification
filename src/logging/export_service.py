@@ -13,7 +13,6 @@ class ExportService:
     """
 
     def __init__(self, folder_path):
-
         self.folder_path = folder_path
         if not os.path.exists(self.folder_path):
             os.makedirs(self.folder_path)
@@ -43,6 +42,7 @@ class ExportService:
             + str(now.hour)
             + str(now.minute)
         )
+
         model_scripted.save(
             os.path.join(self.folder_path, model_name + date_time_as_str + ".pt")
         )  # Save

@@ -9,15 +9,26 @@ from torchvision.datasets.utils import download_and_extract_archive
 
 
 class FgvcAircraftBbox(VisionDataset):
+    """
+    Only transforms or transform/target_transform can be passed as argument
+
+    transforms (callable, optional): A function/transforms that takes in
+        an image and a label and returns the transformed versions of both.
+    transform (callable, optional): A function/transform that takes in a PIL image
+        and returns a transformed version. E.g, ``transforms.RandomCrop``
+    target_transform (callable, optional): A function/transform that takes in the
+        target and transforms it.
+    """
     def __init__(
         self,
         root: str,
         file: str = "images_bounding_box_train.txt",
+        transforms: Optional[Callable] = None,
         transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
         download: bool = False,
     ) -> None:
-        super().__init__(root, transform=transform, target_transform=target_transform)
+        super().__init__(root, transforms=transforms, transform=transform, target_transform=target_transform)
         self.file = file
         self._data_path = os.path.join(self.root, "fgvc-aircraft-2013b")
         if download:
@@ -51,10 +62,13 @@ class FgvcAircraftBbox(VisionDataset):
         image_file, label = self._image_files[idx], self._labels[idx]
         image = PIL.Image.open(image_file).convert("RGB")
 
-        if self.transform:
+        if self.transforms is not None:
+            image, label = self.transforms(image, label)
+
+        if self.transform is not None:
             image = self.transform(image)
 
-        if self.target_transform:
+        if self.target_transform is not None:
             # Scale the coordinates by 4
             label = self.target_transform(label)
 

@@ -1,6 +1,8 @@
 """
     Service Class that executes specific predefined transformations on the data
 """
+import random
+
 import numpy as np
 import torch
 from torchvision.transforms import v2
@@ -16,14 +18,8 @@ class TransformsService:
     https://pytorch.org/vision/main/auto_examples/transforms/plot_custom_transforms.html#sphx-glr-auto-examples-transforms-plot-custom-transforms-py
     """
 
-    def __init__(self, pipeline_name):
-        self.transforms = None
-        self.pipeline_name = pipeline_name
-        if hasattr(self, pipeline_name):
-            pipeline_call = getattr(self, pipeline_name)
-            self.transforms = pipeline_call()
-        else:
-            raise ValueError("Pipeline name not found")
+    def __init__(self, config_parameters=None):
+        self.config_parameters = config_parameters
 
     @staticmethod
     def default_classification_pipeline():
@@ -41,106 +37,169 @@ class TransformsService:
             ]
         )
 
-    @staticmethod
-    def bounding_box_base_pipeline():
+    def training_transforms_pipeline(self):
         """
-            Default pipeline for image data
-            NOTE = 1 Value in Label:
-            1.) Distanz von links -> rechts (innen)
-            2.) Distanz von oben -> unten (innen)
-            3.) Distanz von links -> rechts (außen)
-            4.) Distanz von oben -> unten (außen)
-
-            Idea:
-            Generate fixed sized images, with different random augmentations so increasing the training iterationn
-            equals an increase of the dataset
-            incorporates Data Augmentation, the number of epochs how to be increased as the augmentation is random!
-
-            @aykan
-            Important Note:
-            CenterCrop has different behaviour for PIL and tensor image. In case of PIL image, it pads the image,
-            while for tensor, it crops incorrectly[Checked code, it just computes offset(which are negative) and uses
-            tensor indexing to extract the crop area which is incorrect.
-
-            Concept:
-            1. Pad the image so all images have the same size (1400x1400)
-            2. Resize the image to For Example 350x350 (1400/4)
-            3. Do the Augmentation
-            4. resize the detected coordinates * 4
-
+            as only transforms ( for data and label, or target/transform(for label) and for data separately)
+            can be applied..
+        :return:
         """
         return v2.Compose(
             [
                 # converts Pil image to tensor as well as pads the image
-                PadImageAfter(size=1600),
-                # transforms.Grayscale(num_output_channels=3), maybe grayscale ???
-                # the label Coordinates have to be scaled by 4 (x/4)
-                v2.Resize(size=(400, 400)),
+                pad_image_and_label_into_random_position(size=self.config_parameters["image_size"]),
+                rescale_image_label(self.config_parameters['rescale_factor']),
+                color_jitter_on_image(),
                 v2.ToDtype(torch.float32),
-                #v2.Normalize(mean=(0, 0, 0), std=(1, 1, 1)),  # normalize between 0 and 1
-                # !! ROTATION ALSO TRANSFORM Box Coordinates...!!!!!
-                # v2.RandomRotation(degrees=15),  # bounding boxes can not have rotation
-                v2.ColorJitter()
-                # !! ALSO TRANSFORM Box Coordinates to Upside Down then...!!!!!
-                # v2.RandomHorizontalFlip()
+                normalize_image_label()
             ]
         )
 
-    @staticmethod
-    def test_transform():
+    def prediction_transforms_pipeline(self):
         """
-            A pipeline without Augmentation for model testing
-
-        :return: transform
+            as only transforms ( for data and label, or target/transform(for label) and for data separately)
+            can be applied..
+        :return:
         """
         return v2.Compose(
             [
-                v2.ToDtype(torch.float32),
-                v2.PILToTensor(),
-                v2.Normalize(mean=(0, 0, 0), std=(1, 1, 1)),  # normalize between 0 and 1
+                # converts Pil image to tensor as well as pads the image
+                pad_image_and_label_into_random_position(size=self.config_parameters["image_size"]),
+                rescale_image_label(self.config_parameters['rescale_factor']),
+                v2.ToDtype(torch.float32),  # removes RGB color...
+                normalize_image_label()
             ]
         )
 
-    @staticmethod
-    def scale_coordinates(factor: int):
+    def get_training_transform(self):
+        return self.training_transforms_pipeline()
+
+    def get_prediction_transform(self):
+        return self.prediction_transforms_pipeline()
+
+
+class normalize_image_label:
+    """
+        Normalizes the image
+    """
+
+    def __init__(self):
+        pass
+
+    def __call__(self, image, label):  # we assume inputs are always structured like this
         """
-            Scales the coordinates by a factor
+        For the transformation the image as well as the label have to be adjusted
 
-        :param factor: int
-        :return: transform
+        :param image:
+        :param label:
+        :return:
         """
-        return v2.Compose(
-            [
-                v2.Lambda(lambda x: x / factor)
-            ]
-        )
+        # Normalize the image
+        image = v2.functional.normalize(image, mean=[0, 0, 0], std=[1, 1, 1])
+
+        return image, label
 
 
-    def get_transforms(self):
-        return self.transforms
+class color_jitter_on_image:
+    """
+        Applies color jitter on the image
+    """
+
+    def __init__(self):
+        pass
+
+    def __call__(self, image, label):  # we assume inputs are always structured like this
+        """
+        For the transformation the image as well as the label have to be adjusted
+
+        :param image:
+        :param label:
+        :return:
+        """
+        # image = v2.functional.solarize_image(image, threshold=np.random.randint(0, 255))
+        image = v2.functional.adjust_brightness_image(image, brightness_factor=np.random.uniform(0.6, 0.9))
+        image = v2.functional.adjust_hue_image(image, hue_factor=np.random.uniform(-0.2, 0.2))
+        image = v2.functional.adjust_contrast_image(image, contrast_factor=np.random.uniform(0.6, 0.9))
+        # image = v2.functional.adjust_saturation_image(image, saturation_factor=np.random.uniform(0.6, 0.9))
+
+        return image, label
 
 
-class PadImageAfter:
+class rescale_image_label:
+    """
+        Scales the image and the label by a factor
+    """
+
+    def __init__(self, factor):
+        self.factor = factor
+
+    def __call__(self, image, label):  # we assume inputs are always structured like this
+        """
+        For the transformation the image as well as the label have to be adjusted
+
+        :param image:
+        :param label:
+        :return:
+        """
+        # Scale the image
+        image = v2.functional.resize_image(image, size=[int(image.shape[1] / self.factor),
+                                                        int(image.shape[1] / self.factor)])
+
+        # Scale the label
+        label = label / self.factor
+
+        return image, label
+
+
+class pad_image_and_label_into_random_position:
+    """
+        Pads the image to given size and positions the image at a random position within the padded image
+    """
 
     def __init__(self, size):
         self.size = size
 
-    def __call__(self, image):  # we assume inputs are always structured like this
+    def __call__(self, image, label):  # we assume inputs are always structured like this
+        """
+        For the transformation the image as well as the label have to be adjusted
+
+        :param image:
+        :param label:
+        :return:
+        """
+        # Define the dimensions of the source and the image
         h = image.height
         w = image.width
-        #  To Visualize Input Image
-        #  image.show()
+
         img = np.array(image)
-        img = np.transpose(img, (2, 0, 1))
+        img = np.transpose(img, (2, 0, 1))  # img = (3, h, w)
 
-        target = np.zeros((3, self.size, self.size))
-        target[:, :h, :w] = img
-        tensor_img = torch.tensor(target, dtype=torch.uint8)
+        # Create the source array with random values
+        source_array = np.random.randint(0, 256, size=(3, self.size, self.size), dtype=np.uint8)
 
+        # Calculate the maximum starting points
+        # size because image always square
+        max_height = self.size - h
+        max_width = self.size - w
+
+        # Generate random starting points
+        start_y = np.random.randint(0, max_height + 1)
+        start_x = np.random.randint(0, max_width + 1)
+
+        # Insert the image into the source array at the random position
+        source_array[:, start_y:start_y + h, start_x:start_x + w] = img
+        tensor_img = torch.tensor(source_array, dtype=torch.uint8)
         """
         # DEBUGGING
         toImgTransform = v2.ToPILImage()
         img = toImgTransform(tensor_img)
-        img.show()"""
+        img.show()
+        """
 
-        return tensor_img
+        # Adjust the label postion of the bounding box
+        label_neu = torch.zeros_like(label)
+        label_neu[0] = start_x + label[0]  # abstand linker bild rand bis erstes flugzeugteil
+        label_neu[1] = start_y + label[1]  # abstand oberer bildrand bis erstes flugzeug
+        label_neu[2] = start_x + label[2]  # abstand linker bild rand bis letztes flugzeugteil
+        label_neu[3] = start_y + label[3]  # abstand oberer bildrand bis letztes flugzeug
+
+        return tensor_img, label_neu

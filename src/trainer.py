@@ -14,8 +14,8 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
-device = torch.device("cpu")
-print("Device: ", device)
+#device = torch.device("cpu")
+#print("Device: ", device)
 
 
 class ModelTrainer:
@@ -69,6 +69,7 @@ class ModelTrainer:
         self.optimizer = optimizer
 
     def run(self):
+        log_idx = 0
         for e in range(self.num_epoch):
             self.model.train()
             for i, z in enumerate(self.train_dataloader):
@@ -87,7 +88,8 @@ class ModelTrainer:
                 loss_val, model_out = self.training_step(
                     self.model, x, y, self.loss, self.optimizer
                 )
-                self.writer.add_scalar("Loss/train", loss_val, i)
+                self.writer.add_scalar("Loss/train", loss_val, log_idx)
+                log_idx += 1
                 if i % self.logging_interval == 0:
                     # Logging Single EPOCH TRAIN
 
@@ -104,6 +106,7 @@ class ModelTrainer:
                         print("Training Loss: {}".format(loss_val))
                         print("________________")
                         # '''
+
             # soll-ist logging training epoch
 
             ##### TEST FOR EACH EPOCH
